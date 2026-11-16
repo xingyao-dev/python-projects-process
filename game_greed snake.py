@@ -27,27 +27,34 @@ def gen_food():
         pos=Point(row=random.randint(0,ROW-1),col=random.randint(0,COL-1))
 
         is_coll=False
-        if head.row==pos.row and head.col==pos.col:
-            is_coll= True
-        for snak  in snake:
-            if snak.row==pos.row and head.col==pos.col:
+        if head.row == pos.row and head.col == pos.col:
+            is_coll = True
+        for snak in snake:
+            if snak.row == pos.row and snak.col == pos.col:
                 is_coll = True
                 break
-        if not is_coll :
-            break
-    return pos
+            if not is_coll:
+                    break
+
+
+        return pos
 
 
 head=Point(row=int(ROW/2), col=int(COL/2))
 head_color=(19, 19, 20)
-food=Point(row=random.randint(0,ROW-1),col=random.randint(0,COL-1))
-food_color=(255, 255, 0)
 
 snake=[
     Point(row=head.row, col=head.col + 1),
     Point(row=head.row, col=head.col + 2),
     Point(row=head.row, col=head.col + 3),
 ]
+
+food=gen_food()
+food_color=(255, 255, 0)
+
+
+
+
 
 direct='left'
 
@@ -73,21 +80,25 @@ while quit:
         if event.type==pygame.QUIT:
             quit=False
         elif event.type==pygame.KEYDOWN:
-            print(event)
 
             if event.key==1073741906:
-                direct='up'
+                if direct=='left' or direct=='right':
+                    direct='up'
             elif event.key==1073741903:
-                direct='right'
+                if direct == 'up' or direct == 'down':
+                    direct='right'
             elif event.key==1073741904:
-                direct='left'
+                if direct == 'up' or direct == 'down':
+                    direct='left'
             elif event.key==1073741905:
-                 direct='down'
+                if direct == 'left' or direct == 'right':
+                    direct='down'
 
     eat=(head.row==food.row and head.col==food.col)
 
+
     if eat:
-        food  = Point(row=random.randint(0,ROW-1),col=random.randint(0,COL-1))
+        food  = gen_food()
 
 
     snake.insert(0, head.cop())
@@ -103,8 +114,20 @@ while quit:
         head.row +=1
     elif direct=='up':
         head.row -=1
-
-
+    dead=False
+    if head.col<0 or head.row < 0 or head.col>=COL or head.row>=ROW:
+        dead=True
+    for snak in snake:
+        if head.col==snak.col and head.row==snak.row:
+            dead
+            break
+    for snak in snake:
+        if head.col==snak.col and head.row==snak.row:
+            dead
+            break
+    if dead :
+        print('You are dead !!!')
+        quit=False
     pygame.draw.rect(window, bg_color, ( 0, 0, w, h))
 
     for body in snake:
@@ -118,11 +141,7 @@ while quit:
 
 
 
-# # for _ in range("key-word"):
-# #     if keyword.iskeyword("12345"):
-# #         print("You can play the game!")
-# # else:
-# #     print("You don't play the game!!")
+
 
 
 
