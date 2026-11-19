@@ -1,8 +1,7 @@
-import json
+﻿import json
 import math
 import random
 from array import array
-from collections import deque
 from datetime import datetime
 from pathlib import Path
 
@@ -12,12 +11,24 @@ import pygame
 WIDTH = 1152
 HEIGHT = 700
 HUD_HEIGHT = 60
-GRID_ROWS = 40
-GRID_COLS = 72
-CELL_WIDTH = WIDTH / GRID_COLS
-CELL_HEIGHT = (HEIGHT - HUD_HEIGHT) / GRID_ROWS
+GRID_ROWS = 80
+GRID_COLS = 80
+CELL_WIDTH = 16.0
+CELL_HEIGHT = 16.0
 BOARD_TOP = HUD_HEIGHT
 BOARD_HEIGHT = HEIGHT - HUD_HEIGHT
+WORLD_WIDTH = GRID_COLS * CELL_WIDTH
+WORLD_HEIGHT = GRID_ROWS * CELL_HEIGHT
+VIEW_CENTER_X = WIDTH / 2
+VIEW_CENTER_Y = BOARD_TOP + BOARD_HEIGHT / 2
+BOARD_RECT = pygame.Rect(0, BOARD_TOP, WIDTH, BOARD_HEIGHT)
+PAUSE_BUTTON_RECT = pygame.Rect(842, 10, 132, 40)
+RESUME_BUTTON_RECT = pygame.Rect(986, 10, 148, 40)
+RADAR_SIZE = 168
+RADAR_RECT = pygame.Rect(16, BOARD_TOP + 16, RADAR_SIZE, RADAR_SIZE)
+JOYSTICK_RADIUS = 96
+JOYSTICK_CENTER = (WIDTH - 132, BOARD_TOP + 138)
+JOYSTICK_DEADZONE = 16
 
 SCORE_FILE = Path(__file__).resolve().with_name("snake_scores.json")
 
@@ -31,61 +42,174 @@ ACCENT = (52, 205, 151)
 ACCENT_HOVER = (78, 226, 173)
 FOOD_COLOR = (255, 196, 67)
 BOARD_COLOR = (246, 248, 244)
-WALL_COLOR = (83, 96, 111)
-WALL_EDGE = (49, 59, 72)
-PORTAL_COLOR = (74, 225, 214)
-PORTAL_CORE = (11, 31, 39)
+GRID_COLOR = (232, 238, 233)
+
+PLAYER_START_THICKNESS = 8.5
+SMALL_START_THICKNESS = 6.0
+MIN_THICKNESS = 3.2
+MAX_THICKNESS = min(CELL_WIDTH, CELL_HEIGHT) - 2.0
+
+FOOD_TARGET = 28
+CLEAR_RADIUS = 10
+CLEAR_COOLDOWN_MS = 7000
+MAX_EXTRA_SNAKES = 2
+CLEAR_SCORE = 20
+FULL_CLEAR_SCORE = 100
+REINFORCEMENT_THICKNESS = 8.0
+
+DIRECTION_STEPS = {
+    "up": (0, -1),
+    "down": (0, 1),
+    "left": (-1, 0),
+    "right": (1, 0),
+    "up-left": (-1, -1),
+    "up-right": (1, -1),
+    "down-left": (-1, 1),
+    "down-right": (1, 1),
+}
+OPPOSITE = {
+    "up": "down",
+    "down": "up",
+    "left": "right",
+    "right": "left",
+    "up-left": "down-right",
+    "up-right": "down-left",
+    "down-left": "up-right",
+    "down-right": "up-left",
+}
 
 SKINS = [
     {
-        "name": "红蛇",
-        "body": (238, 91, 91),
-        "body_dark": (190, 48, 58),
-        "head": (213, 60, 66),
-        "outline": (91, 29, 36),
-        "highlight": (255, 177, 162),
-        "belly": (255, 210, 188),
-        "tongue": (255, 104, 124),
+        "name": "橘猫",
+        "avatar": "cat",
+        "pattern": "stripes",
+        "body": (244, 176, 96),
+        "body_dark": (204, 124, 52),
+        "head": (252, 214, 160),
+        "outline": (92, 54, 22),
+        "highlight": (255, 240, 204),
+        "belly": (255, 244, 220),
+        "accent": (255, 150, 150),
+        "eye": (58, 160, 110),
     },
     {
-        "name": "黄蛇",
-        "body": (248, 207, 83),
-        "body_dark": (218, 151, 39),
-        "head": (232, 174, 47),
-        "outline": (104, 72, 13),
-        "highlight": (255, 245, 177),
-        "belly": (255, 239, 188),
-        "tongue": (238, 94, 105),
+        "name": "赤狐",
+        "avatar": "fox",
+        "pattern": "plain",
+        "body": (244, 132, 60),
+        "body_dark": (200, 82, 28),
+        "head": (248, 176, 116),
+        "outline": (96, 44, 18),
+        "highlight": (255, 224, 190),
+        "belly": (255, 248, 236),
+        "accent": (255, 250, 240),
+        "eye": (80, 50, 20),
     },
     {
-        "name": "蓝蛇",
-        "body": (77, 161, 244),
-        "body_dark": (42, 104, 199),
-        "head": (51, 132, 224),
-        "outline": (20, 59, 113),
-        "highlight": (169, 220, 255),
-        "belly": (197, 229, 255),
-        "tongue": (255, 117, 143),
+        "name": "熊猫",
+        "avatar": "panda",
+        "pattern": "spots",
+        "body": (236, 238, 240),
+        "body_dark": (48, 54, 62),
+        "head": (250, 250, 252),
+        "outline": (24, 28, 34),
+        "highlight": (255, 255, 255),
+        "belly": (255, 255, 255),
+        "accent": (34, 38, 44),
+        "eye": (20, 22, 26),
     },
     {
-        "name": "绿蛇",
-        "body": (82, 201, 123),
-        "body_dark": (41, 146, 82),
-        "head": (55, 177, 101),
-        "outline": (18, 76, 43),
-        "highlight": (181, 249, 199),
-        "belly": (211, 247, 211),
-        "tongue": (255, 120, 143),
+        "name": "白兔",
+        "avatar": "rabbit",
+        "pattern": "plain",
+        "body": (246, 230, 238),
+        "body_dark": (212, 184, 200),
+        "head": (255, 248, 252),
+        "outline": (110, 78, 94),
+        "highlight": (255, 255, 255),
+        "belly": (255, 252, 254),
+        "accent": (255, 150, 180),
+        "eye": (96, 64, 84),
     },
     {
-        "name": "黑蛇",
-        "body": (66, 73, 83),
-        "body_dark": (31, 36, 44),
-        "head": (49, 55, 64),
-        "outline": (7, 9, 12),
-        "highlight": (159, 176, 188),
-        "belly": (188, 201, 209),
-        "tongue": (246, 94, 119),
+        "name": "老虎",
+        "avatar": "tiger",
+        "pattern": "stripes",
+        "body": (246, 166, 62),
+        "body_dark": (44, 40, 36),
+        "head": (252, 196, 112),
+        "outline": (70, 44, 18),
+        "highlight": (255, 232, 176),
+        "belly": (255, 244, 218),
+        "accent": (255, 240, 214),
+        "eye": (60, 150, 90),
+    },
+    {
+        "name": "企鹅",
+        "avatar": "penguin",
+        "pattern": "plain",
+        "body": (44, 58, 78),
+        "body_dark": (18, 26, 40),
+        "head": (30, 40, 56),
+        "outline": (8, 12, 18),
+        "highlight": (120, 160, 190),
+        "belly": (248, 250, 252),
+        "accent": (255, 168, 54),
+        "eye": (26, 30, 36),
+    },
+    {
+        "name": "青蛙",
+        "avatar": "frog",
+        "pattern": "spots",
+        "body": (96, 198, 98),
+        "body_dark": (50, 146, 64),
+        "head": (132, 222, 122),
+        "outline": (20, 74, 36),
+        "highlight": (206, 250, 186),
+        "belly": (226, 250, 198),
+        "accent": (255, 170, 180),
+        "eye": (250, 252, 250),
+    },
+    {
+        "name": "柴犬",
+        "avatar": "shiba",
+        "pattern": "plain",
+        "body": (224, 164, 96),
+        "body_dark": (176, 112, 58),
+        "head": (244, 198, 140),
+        "outline": (86, 50, 24),
+        "highlight": (255, 232, 192),
+        "belly": (255, 246, 228),
+        "accent": (255, 255, 255),
+        "eye": (58, 38, 22),
+    },
+    {
+        "name": "粉发少女",
+        "avatar": "anime",
+        "pattern": "plain",
+        "body": (248, 182, 196),
+        "body_dark": (214, 130, 156),
+        "head": (255, 224, 208),
+        "outline": (120, 72, 86),
+        "highlight": (255, 246, 248),
+        "belly": (255, 238, 240),
+        "accent": (255, 142, 164),
+        "eye": (72, 120, 200),
+        "hair": (255, 150, 186),
+    },
+    {
+        "name": "独角兽",
+        "avatar": "unicorn",
+        "pattern": "spots",
+        "body": (226, 214, 246),
+        "body_dark": (180, 160, 220),
+        "head": (255, 250, 255),
+        "outline": (104, 88, 140),
+        "highlight": (255, 255, 255),
+        "belly": (255, 255, 255),
+        "accent": (255, 214, 120),
+        "eye": (110, 80, 180),
+        "mane": (186, 150, 255),
     },
 ]
 
@@ -96,6 +220,8 @@ DIFFICULTIES = [
         "speed": 5.6,
         "color": (66, 190, 115),
         "text_color": (8, 43, 27),
+        "small_snakes": 4,
+        "respawn": 5200,
     },
     {
         "name": "中等",
@@ -103,6 +229,8 @@ DIFFICULTIES = [
         "speed": 8.3,
         "color": (241, 181, 57),
         "text_color": (54, 37, 3),
+        "small_snakes": 5,
+        "respawn": 4200,
     },
     {
         "name": "很难",
@@ -110,6 +238,8 @@ DIFFICULTIES = [
         "speed": 14.3,
         "color": (225, 76, 76),
         "text_color": (255, 245, 245),
+        "small_snakes": 6,
+        "respawn": 3200,
     },
 ]
 
@@ -117,7 +247,7 @@ pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.init()
 AUDIO_ENABLED = pygame.mixer.get_init() is not None
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("贪吃蛇 - 墙体挑战")
+pygame.display.set_caption("贪吃蛇 - 蛇群争食")
 CLOCK = pygame.time.Clock()
 
 FONT_PATHS = [
@@ -204,6 +334,14 @@ DEATH_SOUND = create_note_sound(
     ],
     0.30,
 )
+SNAKE_DOWN_SOUND = create_note_sound(
+    [
+        (392.00, 0.07),
+        (293.66, 0.09),
+        (220.00, 0.13),
+    ],
+    0.20,
+)
 
 
 def play_sound(sound):
@@ -234,13 +372,40 @@ def stop_background_music():
         pass
 
 
+def wrapped_delta(value, size):
+    value %= size
+    if value > size / 2:
+        value -= size
+    return value
+
+
+def grid_distance(first, second):
+    return abs(first.col - second.col) + abs(first.row - second.row)
+
+
 class Point:
+    __slots__ = ("col", "row")
+
     def __init__(self, col, row):
         self.col = col
         self.row = row
 
     def copy(self):
         return Point(row=self.row, col=self.col)
+
+
+class Snake:
+    def __init__(self, body, direction, skin, thickness, is_player=False):
+        self.body = [part.copy() for part in body]
+        self.direction = direction
+        self.skin = skin
+        self.thickness = thickness
+        self.is_player = is_player
+        self.eaten = 0
+
+    @property
+    def head(self):
+        return self.body[0]
 
 
 def get_font(size, bold=False):
@@ -291,6 +456,274 @@ def draw_button(rect, label, mouse_pos, color=ACCENT, text_color=(10, 33, 26)):
     pygame.draw.rect(SCREEN, button_color, rect, border_radius=14)
     pygame.draw.rect(SCREEN, lighten(color, 45), rect, 2, border_radius=14)
     draw_text(label, 25, text_color, rect.center, bold=True)
+
+
+def draw_hud_button(rect, label, mouse_pos, enabled, color):
+    hovered = enabled and rect.collidepoint(mouse_pos)
+    shadow_rect = rect.move(0, 3)
+    pygame.draw.rect(SCREEN, (9, 20, 28), shadow_rect, border_radius=10)
+
+    if enabled:
+        button_color = lighten(color, 22) if hovered else color
+        border_color = lighten(color, 45)
+        text_color = (23, 32, 28)
+    else:
+        button_color = (45, 61, 71)
+        border_color = (69, 87, 99)
+        text_color = (125, 145, 154)
+
+    pygame.draw.rect(SCREEN, button_color, rect, border_radius=10)
+    pygame.draw.rect(SCREEN, border_color, rect, 2, border_radius=10)
+    draw_text(label, 18, text_color, rect.center, bold=True)
+
+
+def draw_avatar(surface, center, radius, skin):
+    cx = int(center[0])
+    cy = int(center[1])
+    r = max(6, int(radius))
+    kind = skin.get("avatar", "cat")
+    outline = skin["outline"]
+    body = skin["body"]
+    dark = skin["body_dark"]
+    face = skin["head"]
+    accent = skin.get("accent", skin["highlight"])
+    eye_color = skin.get("eye", (44, 44, 44))
+    hair = skin.get("hair", dark)
+    mane = skin.get("mane", accent)
+
+    def ell(color, x, y, rx, ry, width=0):
+        rect = pygame.Rect(0, 0, max(1, int(rx * 2)), max(1, int(ry * 2)))
+        rect.center = (int(x), int(y))
+        pygame.draw.ellipse(surface, color, rect, width)
+
+    def poly(color, points, width=0):
+        pygame.draw.polygon(
+            surface,
+            color,
+            [(int(px), int(py)) for px, py in points],
+            width,
+        )
+
+    def ear(sign, height, width, inner):
+        points = [
+            (cx + sign * r * 0.60, cy - r * 0.20),
+            (cx + sign * r * (0.60 + width), cy - r * height),
+            (cx + sign * r * 0.10, cy - r * 0.55),
+        ]
+        poly(body, points)
+        poly(outline, points, 2)
+        inner_points = [
+            (cx + sign * r * 0.56, cy - r * 0.28),
+            (cx + sign * r * (0.56 + width * 0.55), cy - r * (height - 0.22)),
+            (cx + sign * r * 0.20, cy - r * 0.52),
+        ]
+        poly(inner, inner_points)
+
+    if kind in ("cat", "shiba"):
+        ear(-1, 1.35, 0.42, accent)
+        ear(1, 1.35, 0.42, accent)
+    elif kind == "fox":
+        ear(-1, 1.55, 0.50, (255, 246, 232))
+        ear(1, 1.55, 0.50, (255, 246, 232))
+    elif kind == "tiger":
+        ear(-1, 1.22, 0.38, accent)
+        ear(1, 1.22, 0.38, accent)
+    elif kind == "panda":
+        for sign in (-1, 1):
+            pygame.draw.circle(
+                surface,
+                outline,
+                (cx + int(sign * r * 0.66), cy - int(r * 0.72)),
+                max(3, int(r * 0.38)),
+            )
+            pygame.draw.circle(
+                surface,
+                dark,
+                (cx + int(sign * r * 0.66), cy - int(r * 0.72)),
+                max(2, int(r * 0.30)),
+            )
+    elif kind == "rabbit":
+        for sign in (-1, 1):
+            ell(outline, cx + sign * r * 0.38, cy - r * 1.15, r * 0.25, r * 0.72)
+            ell(face, cx + sign * r * 0.38, cy - r * 1.15, r * 0.19, r * 0.64)
+            ell(accent, cx + sign * r * 0.38, cy - r * 1.18, r * 0.09, r * 0.42)
+    elif kind == "frog":
+        for sign in (-1, 1):
+            pygame.draw.circle(
+                surface,
+                outline,
+                (cx + int(sign * r * 0.46), cy - int(r * 0.80)),
+                max(3, int(r * 0.34)),
+            )
+            pygame.draw.circle(
+                surface,
+                face,
+                (cx + int(sign * r * 0.46), cy - int(r * 0.80)),
+                max(2, int(r * 0.28)),
+            )
+    elif kind == "anime":
+        pygame.draw.circle(surface, outline, (cx, cy), r + 4)
+        pygame.draw.circle(surface, hair, (cx, cy), r + 2)
+    elif kind == "unicorn":
+        ear(-1, 1.35, 0.32, accent)
+        ear(1, 1.35, 0.32, accent)
+        poly(accent, [(cx, cy - r * 1.80), (cx - r * 0.16, cy - r * 0.90), (cx + r * 0.16, cy - r * 0.90)])
+        poly(
+            outline,
+            [(cx, cy - r * 1.80), (cx - r * 0.16, cy - r * 0.90), (cx + r * 0.16, cy - r * 0.90)],
+            1,
+        )
+    elif kind == "dragon":
+        for sign in (-1, 1):
+            poly(
+                accent,
+                [
+                    (cx + sign * r * 0.32, cy - r * 0.90),
+                    (cx + sign * r * 0.65, cy - r * 1.65),
+                    (cx + sign * r * 0.85, cy - r * 0.80),
+                ],
+            )
+            poly(
+                outline,
+                [
+                    (cx + sign * r * 0.32, cy - r * 0.90),
+                    (cx + sign * r * 0.65, cy - r * 1.65),
+                    (cx + sign * r * 0.85, cy - r * 0.80),
+                ],
+                1,
+            )
+        ear(-1, 1.20, 0.30, accent)
+        ear(1, 1.20, 0.30, accent)
+
+    pygame.draw.circle(surface, outline, (cx, cy), r + 2)
+    pygame.draw.circle(surface, face, (cx, cy), r)
+
+    if kind == "penguin":
+        ell((248, 250, 252), cx, cy + r * 0.16, r * 0.78, r * 0.64)
+    elif kind == "anime":
+        poly(
+            hair,
+            [
+                (cx - r * 0.98, cy - r * 0.15),
+                (cx - r * 0.75, cy - r * 0.95),
+                (cx - r * 0.30, cy - r * 0.55),
+                (cx, cy - r * 1.05),
+                (cx + r * 0.30, cy - r * 0.55),
+                (cx + r * 0.78, cy - r * 0.95),
+                (cx + r * 0.98, cy - r * 0.15),
+            ],
+        )
+    elif kind == "unicorn":
+        for index in range(3):
+            pygame.draw.circle(
+                surface,
+                mane,
+                (cx - int(r * 0.72), cy - int(r * 0.15) + index * int(r * 0.32)),
+                max(2, int(r * 0.18)),
+            )
+
+    if kind == "tiger":
+        for offset in (-0.28, 0.0, 0.28):
+            pygame.draw.line(
+                surface,
+                dark,
+                (cx + int(r * offset), cy - int(r * 0.78)),
+                (cx + int(r * offset), cy - int(r * 0.42)),
+                max(1, int(r * 0.08)),
+            )
+    if kind == "panda":
+        for sign in (-1, 1):
+            ell(dark, cx + sign * r * 0.36, cy - r * 0.06, r * 0.24, r * 0.30)
+
+    if kind == "frog":
+        for sign in (-1, 1):
+            pygame.draw.circle(
+                surface,
+                (20, 24, 28),
+                (cx + int(sign * r * 0.46), cy - int(r * 0.80)),
+                max(1, int(r * 0.11)),
+            )
+    elif kind == "anime":
+        for sign in (-1, 1):
+            ex = cx + sign * int(r * 0.38)
+            ey = cy + int(r * 0.05)
+            ell((255, 255, 255), ex, ey, r * 0.22, r * 0.28)
+            pygame.draw.circle(surface, eye_color, (ex, ey), max(2, int(r * 0.15)))
+            pygame.draw.circle(surface, (20, 22, 28), (ex, ey), max(1, int(r * 0.08)))
+            pygame.draw.circle(
+                surface,
+                (255, 255, 255),
+                (ex - int(r * 0.05), ey - int(r * 0.07)),
+                max(1, int(r * 0.04)),
+            )
+        for sign in (-1, 1):
+            ell((255, 150, 170), cx + sign * r * 0.62, cy + r * 0.38, r * 0.14, r * 0.08)
+        pygame.draw.arc(
+            surface,
+            outline,
+            pygame.Rect(cx - int(r * 0.12), cy + int(r * 0.32), max(2, int(r * 0.24)), max(2, int(r * 0.16))),
+            math.pi,
+            math.tau,
+            1,
+        )
+    else:
+        eye_radius = max(1, int(r * 0.13))
+        for sign in (-1, 1):
+            ex = cx + sign * int(r * 0.34)
+            ey = cy - int(r * 0.08)
+            pygame.draw.circle(surface, (250, 252, 250), (ex, ey), eye_radius + 1)
+            pygame.draw.circle(surface, eye_color, (ex, ey), eye_radius)
+            pygame.draw.circle(
+                surface,
+                (255, 255, 255),
+                (ex - 1, ey - 1),
+                max(1, eye_radius // 3),
+            )
+
+    if kind in ("cat", "tiger"):
+        for sign in (-1, 1):
+            for delta in (-0.06, 0.10):
+                pygame.draw.line(
+                    surface,
+                    outline,
+                    (cx + int(sign * r * 0.42), cy + int(r * 0.30)),
+                    (cx + int(sign * r * 0.95), cy + int(r * (0.20 + delta))),
+                    1,
+                )
+
+    if kind == "penguin":
+        poly((255, 168, 54), [(cx - r * 0.18, cy + r * 0.20), (cx + r * 0.18, cy + r * 0.20), (cx, cy + r * 0.52)])
+    elif kind == "frog":
+        pygame.draw.arc(
+            surface,
+            outline,
+            pygame.Rect(cx - int(r * 0.55), cy + int(r * 0.02), max(2, int(r * 1.1)), max(2, int(r * 0.45))),
+            math.pi,
+            math.tau,
+            2,
+        )
+    elif kind != "anime":
+        ell(skin["belly"], cx, cy + r * 0.36, r * 0.46, r * 0.28)
+        poly(
+            outline,
+            [
+                (cx - r * 0.09, cy + r * 0.20),
+                (cx + r * 0.09, cy + r * 0.20),
+                (cx, cy + r * 0.34),
+            ],
+        )
+        pygame.draw.arc(
+            surface,
+            outline,
+            pygame.Rect(cx - int(r * 0.22), cy + int(r * 0.30), max(2, int(r * 0.44)), max(2, int(r * 0.22))),
+            0,
+            math.pi,
+            1,
+        )
+
+    if kind in ("rabbit", "anime"):
+        for sign in (-1, 1):
+            ell((255, 150, 170), cx + sign * r * 0.62, cy + r * 0.38, r * 0.14, r * 0.08)
 
 
 def build_menu_background():
@@ -369,62 +802,11 @@ def draw_snake_art(center, skin, length=13, spacing=18, radius=12, amplitude=16)
         )
 
     head_x, head_y = points[-1]
-    head_width = int(body_radius * 2.9)
-    head_height = int(body_radius * 2.35)
-    head_rect = pygame.Rect(0, 0, head_width, head_height)
-    head_rect.center = (head_x + body_radius // 2, head_y)
-    pygame.draw.ellipse(
+    draw_avatar(
         preview,
-        skin["outline"],
-        head_rect.inflate(6 * render_scale, 6 * render_scale),
-    )
-    pygame.draw.ellipse(preview, skin["head"], head_rect)
-    pygame.draw.ellipse(
-        preview,
-        mix_color(skin["head"], skin["highlight"], 0.28),
-        pygame.Rect(
-            head_rect.x + head_width // 5,
-            head_rect.y + head_height // 6,
-            max(4, head_width // 2),
-            max(3, head_height // 5),
-        ),
-    )
-
-    eye_radius = max(3, body_radius // 3)
-    eye_x = head_rect.right - head_width // 4
-    eye_top = head_rect.centery - head_height // 5
-    eye_bottom = head_rect.centery + head_height // 5
-    for eye_y in (eye_top, eye_bottom):
-        pygame.draw.circle(preview, (248, 252, 251), (eye_x, eye_y), eye_radius)
-        pygame.draw.circle(
-            preview,
-            (20, 28, 31),
-            (eye_x + max(1, eye_radius // 3), eye_y),
-            max(1, eye_radius // 2),
-        )
-
-    tongue_start = (head_rect.right - 2, head_rect.centery)
-    tongue_end = (head_rect.right + body_radius // 2, head_rect.centery)
-    pygame.draw.line(
-        preview,
-        skin["tongue"],
-        tongue_start,
-        tongue_end,
-        max(2, render_scale),
-    )
-    pygame.draw.line(
-        preview,
-        skin["tongue"],
-        tongue_end,
-        (tongue_end[0] + body_radius // 4, tongue_end[1] - body_radius // 5),
-        max(2, render_scale),
-    )
-    pygame.draw.line(
-        preview,
-        skin["tongue"],
-        tongue_end,
-        (tongue_end[0] + body_radius // 4, tongue_end[1] + body_radius // 5),
-        max(2, render_scale),
+        (head_x + body_radius * 0.2, head_y),
+        body_radius * 1.25,
+        skin,
     )
 
     target_size = (
@@ -443,93 +825,65 @@ def draw_snake_art(center, skin, length=13, spacing=18, radius=12, amplitude=16)
     SCREEN.blit(preview, preview_rect)
 
 
-def boundary_cells():
-    cells = set()
-    for row in range(GRID_ROWS):
-        cells.add((row, 0))
-        cells.add((row, GRID_COLS - 1))
-    for col in range(GRID_COLS):
-        cells.add((0, col))
-        cells.add((GRID_ROWS - 1, col))
-    return cells
-
-
-def random_portal_pair():
-    candidates = [
-        (row, col)
-        for row, col in boundary_cells()
-        if not (
-            row in (0, GRID_ROWS - 1)
-            and col in (0, GRID_COLS - 1)
-        )
-    ]
-    return tuple(random.sample(candidates, 2))
-
-
-def portal_exit_cell(portal):
-    row, col = portal
-    if row == 0:
-        return (1, col)
-    if row == GRID_ROWS - 1:
-        return (GRID_ROWS - 2, col)
-    if col == 0:
-        return (row, 1)
-    return (row, GRID_COLS - 2)
-
-
-def portal_entry_direction(portal):
-    row, col = portal
-    if row == 0:
-        return "down"
-    if row == GRID_ROWS - 1:
-        return "up"
-    if col == 0:
-        return "right"
-    return "left"
-
-
-def initial_walls(portals):
-    walls = boundary_cells()
-    blocks = [
-        (5, 14, 12, 2),
-        (23, 14, 11, 2),
-        (5, 52, 12, 2),
-        (23, 52, 11, 2),
-        (14, 23, 2, 12),
-        (27, 32, 2, 12),
-    ]
-    for start_row, start_col, height, width in blocks:
-        for row in range(start_row, start_row + height):
-            for col in range(start_col, start_col + width):
-                walls.add((row, col))
-    walls.difference_update(portals)
-    return walls
-
-
 class SnakeGame:
     def __init__(self, skin, difficulty):
         self.skin = skin
         self.difficulty = difficulty
-        self.portals = random_portal_pair()
-        self.walls = initial_walls(self.portals)
-        self.head = Point(row=GRID_ROWS // 2, col=GRID_COLS // 2)
-        self.snake = [
-            Point(row=self.head.row, col=self.head.col + 1),
-            Point(row=self.head.row, col=self.head.col + 2),
-            Point(row=self.head.row, col=self.head.col + 3),
-        ]
-        self.direction = "left"
-        self.next_direction = "left"
         self.score = 0
         self.food_eaten = 0
-        self.food = self.create_food()
-        self.last_move = pygame.time.get_ticks()
+        self.small_deaths = 0
+        self.last_clear_event = -CLEAR_COOLDOWN_MS
+        self.foods = []
+        self.small_snakes = []
+        self.respawn_at = []
         self.dead_reason = ""
         self.notice_message = ""
         self.notice_started_at = 0
         self.notice_duration = 0
         self.notice_color = ACCENT
-        self.show_notice("游戏开始！方向键控制移动", ACCENT, 2400)
+        self.paused = False
+        self.prev_bodies = {}
+        self.render_t = 1.0
+
+        start_row = GRID_ROWS // 2
+        start_col = GRID_COLS // 2
+        body = [Point(col=start_col + index, row=start_row) for index in range(5)]
+        self.player = Snake(body, "left", skin, PLAYER_START_THICKNESS, True)
+        self.next_direction = "left"
+        self.last_move = pygame.time.get_ticks()
+        head = self.player.head
+        self.cam_x = (head.col + 0.5) * CELL_WIDTH
+        self.cam_y = (head.row + 0.5) * CELL_HEIGHT
+
+        for _ in range(difficulty["small_snakes"]):
+            self.spawn_small_snake(initial=True)
+        self.spawn_food(FOOD_TARGET)
+        self.show_notice(
+            "右上圆盘控制方向 · 撞到方形边界墙会死",
+            ACCENT,
+            3000,
+        )
+
+    @property
+    def snake(self):
+        return self.player.body
+
+    @property
+    def head(self):
+        return self.player.head
+
+    @property
+    def direction(self):
+        return self.player.direction
+
+    def all_snakes(self):
+        return [self.player] + self.small_snakes
+
+    def leader_snake(self):
+        return max(
+            self.all_snakes(),
+            key=lambda snake: (snake.thickness, len(snake.body)),
+        )
 
     def show_notice(self, message, color=ACCENT, duration=1800):
         self.notice_message = message
@@ -537,222 +891,675 @@ class SnakeGame:
         self.notice_started_at = pygame.time.get_ticks()
         self.notice_duration = duration
 
-    def create_food(self):
-        occupied = {(self.head.row, self.head.col)}
-        occupied.update((body.row, body.col) for body in self.snake)
-        occupied.update(self.walls)
-        occupied.update(self.portals)
-        occupied.update(portal_exit_cell(portal) for portal in self.portals)
-        free_cells = [
-            (row, col)
-            for row in range(GRID_ROWS)
-            for col in range(GRID_COLS)
-            if (row, col) not in occupied
-        ]
-        if not free_cells:
-            return None
-        row, col = random.choice(free_cells)
-        return Point(row=row, col=col)
+    def set_paused(self, paused):
+        if self.paused == paused:
+            return
+        self.paused = paused
+        if not paused:
+            self.last_move = pygame.time.get_ticks()
+
+    def cell_is_free(self, col, row):
+        for snake in self.all_snakes():
+            for part in snake.body:
+                if part.col == col and part.row == row:
+                    return False
+        for food in self.foods:
+            if food.col == col and food.row == row:
+                return False
+        return True
+
+    def spawn_food(self, amount=1, near=None, min_radius=6.0, max_radius=12.0):
+        if len(self.foods) >= FOOD_TARGET + 8:
+            return
+        for _ in range(amount):
+            for _attempt in range(500):
+                if near is not None:
+                    angle = random.uniform(0.0, math.tau)
+                    radius = random.uniform(min_radius, max_radius)
+                    col = int(round(near.col + math.cos(angle) * radius))
+                    row = int(round(near.row + math.sin(angle) * radius))
+                else:
+                    col = random.randrange(GRID_COLS)
+                    row = random.randrange(GRID_ROWS)
+                if not (0 <= col < GRID_COLS and 0 <= row < GRID_ROWS):
+                    continue
+                if not self.cell_is_free(col, row):
+                    continue
+                if grid_distance(Point(col, row), self.player.head) < 4:
+                    continue
+                self.foods.append(Point(col=col, row=row))
+                break
+
+    def spawn_small_snake(self, initial=False, thickness=SMALL_START_THICKNESS):
+        palettes = [skin for skin in SKINS if skin is not self.skin] or SKINS
+        for _attempt in range(400):
+            direction = random.choice(list(DIRECTION_STEPS))
+            step_col, step_row = DIRECTION_STEPS[direction]
+            head_col = random.randrange(GRID_COLS)
+            head_row = random.randrange(GRID_ROWS)
+            body = []
+            valid = True
+            length = random.randint(4, 6)
+            for index in range(length):
+                col = head_col - step_col * index
+                row = head_row - step_row * index
+                if not (0 <= col < GRID_COLS and 0 <= row < GRID_ROWS):
+                    valid = False
+                    break
+                if not self.cell_is_free(col, row):
+                    valid = False
+                    break
+                body.append(Point(col=col, row=row))
+            if not valid:
+                continue
+            distance = grid_distance(body[0], self.player.head)
+            if distance < 6 or (initial and distance < 14):
+                continue
+            self.small_snakes.append(
+                Snake(body, direction, random.choice(palettes), thickness)
+            )
+            return True
+        return False
+
+    def nearest_food(self, point):
+        best = None
+        best_distance = 10 ** 9
+        for food in self.foods:
+            distance = grid_distance(point, food)
+            if distance < best_distance:
+                best_distance = distance
+                best = food
+        return best
+
+    def choose_ai_direction(self, snake):
+        head = snake.head
+        target = self.nearest_food(head)
+
+        danger = set()
+        heads = []
+        for other in self.all_snakes():
+            for part in other.body:
+                danger.add((part.row, part.col))
+            heads.append(other.head)
+
+        options = []
+        for direction, (step_col, step_row) in DIRECTION_STEPS.items():
+            if direction == OPPOSITE[snake.direction]:
+                continue
+            col = head.col + step_col
+            row = head.row + step_row
+            score = random.random() * 0.35
+            if not (0 <= col < GRID_COLS and 0 <= row < GRID_ROWS):
+                score += 1000
+                options.append((score, direction))
+                continue
+            if (row, col) in danger:
+                score += 80
+            if target is not None:
+                score += grid_distance(Point(col, row), target)
+            for other_head in heads:
+                if other_head is head:
+                    continue
+                if grid_distance(Point(col, row), other_head) <= 1:
+                    score += 7
+            if direction == snake.direction:
+                score -= 0.4
+            options.append((score, direction))
+
+        if not options:
+            return snake.direction
+        options.sort(key=lambda item: item[0])
+        return options[0][1]
 
     def turn(self, direction):
         if self.next_direction != self.direction:
             return
-        opposite = {
-            "up": "down",
-            "down": "up",
-            "left": "right",
-            "right": "left",
-        }
-        if direction != opposite[self.direction]:
+        if direction != OPPOSITE[self.direction]:
             self.next_direction = direction
 
-    def food_is_reachable(self, walls, portals=None):
-        if self.food is None:
-            return False
-
-        portals = portals or self.portals
-        portal_exits = [portal_exit_cell(portal) for portal in portals]
-        target = (self.food.row, self.food.col)
-        start = (self.head.row, self.head.col)
-        queue = deque([start])
-        visited = {start}
-        directions = ((1, 0), (-1, 0), (0, 1), (0, -1))
-
-        while queue:
-            row, col = queue.popleft()
-            if (row, col) == target:
-                return True
-            if (row, col) == portal_exits[0] and portal_exits[1] not in visited:
-                visited.add(portal_exits[1])
-                queue.append(portal_exits[1])
-            elif (row, col) == portal_exits[1] and portal_exits[0] not in visited:
-                visited.add(portal_exits[0])
-                queue.append(portal_exits[0])
-            for row_delta, col_delta in directions:
-                next_row = row + row_delta
-                next_col = col + col_delta
-                next_cell = (next_row, next_col)
-                if (
-                    0 <= next_row < GRID_ROWS
-                    and 0 <= next_col < GRID_COLS
-                    and next_cell not in walls
-                    and next_cell not in visited
-                ):
-                    visited.add(next_cell)
-                    queue.append(next_cell)
-        return False
-
-    def regenerate_walls(self):
-        protected = {(self.head.row, self.head.col)}
-        protected.update((body.row, body.col) for body in self.snake)
-        if self.food is not None:
-            protected.add((self.food.row, self.food.col))
-
-        for row in range(self.head.row - 2, self.head.row + 3):
-            for col in range(self.head.col - 2, self.head.col + 3):
-                protected.add((row, col))
-
-        for _ in range(120):
-            candidate_portals = random_portal_pair()
-            portal_safe = set(candidate_portals)
-            portal_safe.update(
-                portal_exit_cell(portal) for portal in candidate_portals
-            )
-            if self.food is not None and (self.food.row, self.food.col) in portal_safe:
-                continue
-
-            candidate = boundary_cells()
-            candidate.difference_update(candidate_portals)
-            interior_count = 0
-            for _ in range(random.randint(8, 11)):
-                height = random.randint(2, 5)
-                width = random.randint(4, 16)
-                start_row = random.randint(2, GRID_ROWS - height - 3)
-                start_col = random.randint(2, GRID_COLS - width - 3)
-                block = {
-                    (row, col)
-                    for row in range(start_row, start_row + height)
-                    for col in range(start_col, start_col + width)
-                }
-                if block.isdisjoint(protected | portal_safe):
-                    previous_count = len(candidate)
-                    candidate.update(block)
-                    interior_count += len(candidate) - previous_count
-
-            if 80 <= interior_count <= 300 and self.food_is_reachable(
-                candidate,
-                candidate_portals,
-            ):
-                self.portals = candidate_portals
-                self.walls = candidate
-                return
-
     def update(self):
-        self.direction = self.next_direction
-        next_head = self.head.copy()
-        if self.direction == "left":
-            next_head.col -= 1
-        elif self.direction == "right":
-            next_head.col += 1
-        elif self.direction == "up":
-            next_head.row -= 1
-        elif self.direction == "down":
-            next_head.row += 1
+        now = pygame.time.get_ticks()
+        while self.respawn_at and now >= self.respawn_at[0]:
+            self.respawn_at.pop(0)
+            if len(self.small_snakes) < self.difficulty["small_snakes"]:
+                self.spawn_small_snake()
 
-        next_cell = (next_head.row, next_head.col)
-        if next_cell in self.portals:
-            portal_index = self.portals.index(next_cell)
-            exit_portal = self.portals[1 - portal_index]
-            exit_row, exit_col = portal_exit_cell(exit_portal)
-            next_head = Point(row=exit_row, col=exit_col)
-            exit_direction = portal_entry_direction(exit_portal)
-            self.direction = exit_direction
-            self.next_direction = exit_direction
+        self.player.direction = self.next_direction
+        snakes = self.all_snakes()
+        self.prev_bodies = {
+            snake: [part.copy() for part in snake.body]
+            for snake in snakes
+        }
 
-        eat = (
-            self.food is not None
-            and next_head.row == self.food.row
-            and next_head.col == self.food.col
-        )
-        body_to_check = self.snake if eat else self.snake[:-1]
-
-        if not (0 <= next_head.col < GRID_COLS and 0 <= next_head.row < GRID_ROWS):
-            return "撞到了边界墙！"
-        if (next_head.row, next_head.col) in self.walls:
-            return "撞到了墙体！"
-        if any(
-            body.row == next_head.row and body.col == next_head.col
-            for body in body_to_check
-        ):
-            return "撞到了自己的身体！"
-
-        self.snake.insert(0, self.head.copy())
-        if not eat:
-            self.snake.pop()
-        self.head = next_head
-
-        if eat:
-            play_sound(EAT_SOUND)
-            self.score += 10
-            self.food_eaten += 1
-            self.food = self.create_food()
-            if self.food is None:
-                return "你填满了整个地图！"
-            if self.food_eaten % 5 == 0:
-                self.regenerate_walls()
-                self.show_notice(
-                    "身体变大！墙体与传送口已变化！",
-                    (244, 179, 65),
-                    2900,
-                )
+        decisions = {}
+        for snake in snakes:
+            if snake.is_player:
+                decisions[snake] = self.player.direction
             else:
-                self.show_notice(
-                    "吃到食物！身体变大，长度 +1",
-                    (82, 213, 160),
-                    2100,
-                )
+                decisions[snake] = self.choose_ai_direction(snake)
+
+        new_heads = {}
+        eating = {}
+        for snake in snakes:
+            direction = decisions[snake]
+            snake.direction = direction
+            step_col, step_row = DIRECTION_STEPS[direction]
+            head = snake.head
+            new_head = Point(
+                col=head.col + step_col,
+                row=head.row + step_row,
+            )
+            new_heads[snake] = new_head
+            in_bounds = (
+                0 <= new_head.col < GRID_COLS
+                and 0 <= new_head.row < GRID_ROWS
+            )
+            eating[snake] = in_bounds and any(
+                food.col == new_head.col and food.row == new_head.row
+                for food in self.foods
+            )
+
+        after_cells = {}
+        for snake in snakes:
+            cells = {(part.row, part.col) for part in snake.body}
+            if not eating[snake]:
+                tail = snake.body[-1]
+                cells.discard((tail.row, tail.col))
+            after_cells[snake] = cells
+
+        deaths = {}
+        for snake in snakes:
+            new_head = new_heads[snake]
+            if not (
+                0 <= new_head.col < GRID_COLS
+                and 0 <= new_head.row < GRID_ROWS
+            ):
+                deaths[snake] = "撞到了边界墙！"
+                continue
+            cell = (new_head.row, new_head.col)
+            for other in snakes:
+                if other is snake:
+                    continue
+                if cell in after_cells[other]:
+                    if other.is_player:
+                        deaths[snake] = "撞到了大蛇的身体！"
+                    else:
+                        deaths[snake] = "撞到了小蛇的身体！"
+                    break
+            if snake not in deaths and cell in after_cells[snake]:
+                deaths[snake] = "撞到了自己的身体！"
+
+        target_cells = {}
+        for snake in snakes:
+            cell = (new_heads[snake].row, new_heads[snake].col)
+            target_cells.setdefault(cell, []).append(snake)
+        for group in target_cells.values():
+            if len(group) > 1:
+                for snake in group:
+                    deaths.setdefault(snake, "和另一条蛇撞头了！")
+
+        if self.player in deaths:
+            self.dead_reason = deaths[self.player]
+            return self.dead_reason
+
+        for snake in snakes:
+            if snake in deaths:
+                continue
+            snake.body.insert(0, new_heads[snake])
+            if not eating[snake]:
+                snake.body.pop()
+
+        for snake in snakes:
+            if snake in deaths:
+                if not snake.is_player:
+                    self.handle_small_death(snake, now)
+                continue
+            if eating[snake]:
+                self.consume_food(snake, new_heads[snake])
+
         return ""
 
-    def draw(self):
-        SCREEN.fill((18, 31, 42))
-        pygame.draw.rect(
-            SCREEN,
-            BOARD_COLOR,
-            (0, BOARD_TOP, WIDTH, BOARD_HEIGHT),
+    def handle_small_death(self, snake, now):
+        if snake in self.small_snakes:
+            self.small_snakes.remove(snake)
+        self.small_deaths += 1
+        play_sound(SNAKE_DOWN_SOUND)
+        for index, part in enumerate(snake.body):
+            if index % 2:
+                continue
+            if len(self.foods) >= FOOD_TARGET + 12:
+                break
+            if self.cell_is_free(part.col, part.row):
+                self.foods.append(part.copy())
+        self.respawn_at.append(now + self.difficulty["respawn"])
+        if len(self.foods) > FOOD_TARGET + 2:
+            self.show_notice("一条小蛇倒下，身体变成了食物", (255, 156, 120), 1700)
+
+    def consume_food(self, snake, cell):
+        for index, food in enumerate(self.foods):
+            if food.col == cell.col and food.row == cell.row:
+                del self.foods[index]
+                break
+
+        snake.eaten += 1
+        refilled_locally = False
+        if snake.is_player:
+            self.food_eaten += 1
+            self.score += 10
+            snake.thickness = min(MAX_THICKNESS, snake.thickness + 0.55)
+            for small in self.small_snakes:
+                small.thickness = max(MIN_THICKNESS, small.thickness - 0.16)
+            play_sound(EAT_SOUND)
+            nearby = any(
+                grid_distance(food, self.head) <= CLEAR_RADIUS
+                for food in self.foods
+            )
+            if nearby:
+                self.show_notice("吃到食物：身体变长变粗，小蛇被压瘦", (82, 213, 160), 1500)
+            else:
+                self.handle_local_clear()
+                refilled_locally = True
+        else:
+            snake.thickness = min(MAX_THICKNESS, snake.thickness + 0.62)
+            if random.random() < 0.25:
+                self.show_notice("小蛇抢到了一颗食物，正在长大", (120, 190, 255), 1100)
+
+        if not refilled_locally:
+            self.spawn_food(1)
+
+    def handle_local_clear(self):
+        if not self.foods:
+            self.spawn_food(12)
+            self.spawn_food(
+                4,
+                near=self.head,
+                min_radius=6.0,
+                max_radius=11.0,
+            )
+            for _ in range(2):
+                self.spawn_small_snake(thickness=REINFORCEMENT_THICKNESS)
+            self.score += FULL_CLEAR_SCORE
+            self.show_notice(
+                "全场食物清空：蛇群增援，食物重新铺满",
+                (255, 96, 96),
+                3000,
+            )
+            return
+
+        self.spawn_food(3, near=self.head, min_radius=6.0, max_radius=11.0)
+        now = pygame.time.get_ticks()
+        can_reinforce = (
+            now - self.last_clear_event >= CLEAR_COOLDOWN_MS
+            and len(self.small_snakes)
+            < self.difficulty["small_snakes"] + MAX_EXTRA_SNAKES
         )
-        for row, col in self.walls:
-            rect = pygame.Rect(
-                int(col * CELL_WIDTH),
-                int(BOARD_TOP + row * CELL_HEIGHT),
-                math.ceil(CELL_WIDTH),
-                math.ceil(CELL_HEIGHT),
+        if can_reinforce and self.spawn_small_snake(
+            thickness=REINFORCEMENT_THICKNESS
+        ):
+            self.last_clear_event = now
+            self.score += CLEAR_SCORE
+            self.show_notice(
+                "周围食物清空：一条新的小蛇被引来",
+                (255, 140, 110),
+                2200,
             )
-            pygame.draw.rect(SCREEN, WALL_COLOR, rect)
-            pygame.draw.rect(SCREEN, WALL_EDGE, rect, 1)
+            return
+        self.show_notice(
+            "周围食物吃完了，附近又长出一批",
+            (255, 196, 67),
+            1900,
+        )
 
-        for portal in self.portals:
-            row, col = portal
-            rect = pygame.Rect(
-                int(col * CELL_WIDTH),
-                int(BOARD_TOP + row * CELL_HEIGHT),
-                math.ceil(CELL_WIDTH),
-                math.ceil(CELL_HEIGHT),
+    def head_world(self):
+        head = self.player.head
+        return (
+            (head.col + 0.5) * CELL_WIDTH,
+            (head.row + 0.5) * CELL_HEIGHT,
+        )
+
+    def interpolated_head_world(self, t):
+        head = self.player.head
+        previous = self.prev_bodies.get(self.player)
+        if previous:
+            old = previous[0]
+            col = old.col + (head.col - old.col) * t
+            row = old.row + (head.row - old.row) * t
+        else:
+            col = head.col
+            row = head.row
+        return (
+            (col + 0.5) * CELL_WIDTH,
+            (row + 0.5) * CELL_HEIGHT,
+        )
+
+    def body_centers(self, snake, t):
+        previous = self.prev_bodies.get(snake)
+        centers = []
+        for index, part in enumerate(snake.body):
+            if previous is not None and index < len(previous):
+                old = previous[index]
+            else:
+                old = part
+            col = old.col + (part.col - old.col) * t
+            row = old.row + (part.row - old.row) * t
+            centers.append(
+                self.to_screen(
+                    (col + 0.5) * CELL_WIDTH,
+                    (row + 0.5) * CELL_HEIGHT,
+                )
             )
-            center = rect.center
-            pygame.draw.rect(SCREEN, PORTAL_CORE, rect)
-            pygame.draw.circle(SCREEN, PORTAL_COLOR, center, 7)
-            pygame.draw.circle(SCREEN, PORTAL_CORE, center, 4)
+        return centers
 
-        if self.food is not None:
-            center = (
-                int((self.food.col + 0.5) * CELL_WIDTH),
-                int(BOARD_TOP + (self.food.row + 0.5) * CELL_HEIGHT),
+    def to_screen(self, x, y):
+        return (
+            int(VIEW_CENTER_X + x - self.cam_x),
+            int(VIEW_CENTER_Y + y - self.cam_y),
+        )
+
+    def cell_screen(self, part):
+        return self.to_screen(
+            (part.col + 0.5) * CELL_WIDTH,
+            (part.row + 0.5) * CELL_HEIGHT,
+        )
+
+    def draw_line(self, color, start, end, width):
+        pygame.draw.line(SCREEN, color, start, end, width)
+
+    def draw_circle(self, color, center, radius):
+        pygame.draw.circle(SCREEN, color, center, radius)
+
+    def draw_head(self, snake, center, thickness):
+        radius = max(8, int(round(thickness)))
+        draw_avatar(SCREEN, center, radius, snake.skin)
+    def draw_snake(self, snake):
+        thickness = max(4, int(round(snake.thickness)))
+        centers = self.body_centers(snake, self.render_t)
+
+        for index in range(len(centers) - 1):
+            self.draw_line(
+                snake.skin["outline"],
+                centers[index],
+                centers[index + 1],
+                thickness + 4,
             )
-            pygame.draw.circle(SCREEN, (126, 78, 14), center, 7)
-            pygame.draw.circle(SCREEN, FOOD_COLOR, center, 6)
+        for index in range(len(centers) - 1):
+            self.draw_line(
+                mix_color(snake.skin["body_dark"], snake.skin["body"], 0.7),
+                centers[index],
+                centers[index + 1],
+                thickness,
+            )
 
-        self.draw_snake()
+        radius = max(3, thickness // 2)
+        for index, center in enumerate(centers[1:]):
+            band = (index % 4) / 3
+            body_color = mix_color(
+                snake.skin["body_dark"],
+                snake.skin["body"],
+                0.55 + band * 0.45,
+            )
+            self.draw_circle(body_color, center, radius)
+            highlight_center = (
+                center[0] - max(1, radius // 3),
+                center[1] - max(1, radius // 3),
+            )
+            self.draw_circle(
+                snake.skin["highlight"],
+                highlight_center,
+                max(1, radius // 4),
+            )
+
+        pattern = snake.skin.get("pattern")
+        if pattern == "stripes":
+            for index, center in enumerate(centers[1:]):
+                if index % 3 == 0:
+                    self.draw_circle(
+                        snake.skin["body_dark"],
+                        center,
+                        max(2, radius // 2),
+                    )
+        elif pattern == "spots":
+            for index, center in enumerate(centers[1:]):
+                if index % 4 == 2:
+                    self.draw_circle(
+                        snake.skin["body_dark"],
+                        (
+                            center[0] + radius // 3,
+                            center[1] - radius // 3,
+                        ),
+                        max(1, radius // 4),
+                    )
+
+        tail = centers[-1]
+        self.draw_circle(snake.skin["outline"], tail, radius + 2)
+        self.draw_circle(
+            mix_color(snake.skin["body_dark"], snake.skin["body"], 0.35),
+            tail,
+            radius,
+        )
+
+        self.draw_head(snake, centers[0], thickness)
+
+    def draw_grid(self, world_rect):
+        left = max(0, world_rect.left)
+        right = min(WIDTH, world_rect.right)
+        top = max(BOARD_TOP, world_rect.top)
+        bottom = min(HEIGHT, world_rect.bottom)
+        if left >= right or top >= bottom:
+            return
+        for col in range(0, GRID_COLS, 4):
+            screen_x = world_rect.left + int(col * CELL_WIDTH)
+            if left <= screen_x <= right:
+                pygame.draw.line(
+                    SCREEN,
+                    GRID_COLOR,
+                    (screen_x, top),
+                    (screen_x, bottom),
+                    1,
+                )
+        for row in range(0, GRID_ROWS, 4):
+            screen_y = world_rect.top + int(row * CELL_HEIGHT)
+            if top <= screen_y <= bottom:
+                pygame.draw.line(
+                    SCREEN,
+                    GRID_COLOR,
+                    (left, screen_y),
+                    (right, screen_y),
+                    1,
+                )
+
+    def draw_food(self):
+        now = pygame.time.get_ticks()
+        for index, food in enumerate(self.foods):
+            center = self.cell_screen(food)
+            pulse = 1.0 + 0.10 * math.sin(now / 260.0 + index * 1.7)
+            glow_radius = max(4, int(8 * pulse))
+            self.draw_circle((255, 224, 138), center, glow_radius)
+            self.draw_circle((126, 78, 14), center, max(3, int(6 * pulse)))
+            self.draw_circle(FOOD_COLOR, center, max(2, int(5 * pulse)))
+
+    def update_pointer(self, mouse_pos):
+        delta_x = mouse_pos[0] - JOYSTICK_CENTER[0]
+        delta_y = mouse_pos[1] - JOYSTICK_CENTER[1]
+        if delta_x * delta_x + delta_y * delta_y > JOYSTICK_RADIUS ** 2:
+            return
+        if abs(delta_x) < JOYSTICK_DEADZONE and abs(delta_y) < JOYSTICK_DEADZONE:
+            return
+        angle = math.atan2(delta_y, delta_x)
+        sector = int(round(angle / (math.pi / 4))) % 8
+        directions = (
+            "right",
+            "down-right",
+            "down",
+            "down-left",
+            "left",
+            "up-left",
+            "up",
+            "up-right",
+        )
+        self.turn(directions[sector])
+
+    def draw_joystick(self):
+        mouse_pos = pygame.mouse.get_pos()
+        delta_x = mouse_pos[0] - JOYSTICK_CENTER[0]
+        delta_y = mouse_pos[1] - JOYSTICK_CENTER[1]
+        distance = math.hypot(delta_x, delta_y)
+
+        diameter = JOYSTICK_RADIUS * 2
+        surface = pygame.Surface((diameter, diameter), pygame.SRCALPHA)
+        center = (JOYSTICK_RADIUS, JOYSTICK_RADIUS)
+        pygame.draw.circle(surface, (4, 12, 18, 64), center, JOYSTICK_RADIUS)
+        pygame.draw.circle(
+            surface,
+            (255, 255, 255, 40),
+            center,
+            JOYSTICK_RADIUS,
+            2,
+        )
+        pygame.draw.circle(
+            surface,
+            (255, 255, 255, 24),
+            center,
+            JOYSTICK_RADIUS - 26,
+            1,
+        )
+        if distance <= JOYSTICK_RADIUS:
+            knob = (
+                int(center[0] + delta_x),
+                int(center[1] + delta_y),
+            )
+            pygame.draw.line(
+                surface,
+                (210, 236, 236, 80),
+                center,
+                knob,
+                2,
+            )
+            pygame.draw.circle(surface, (232, 244, 244, 150), knob, 9)
+            pygame.draw.circle(surface, (20, 36, 44, 120), knob, 4)
+        SCREEN.blit(
+            surface,
+            (
+                int(JOYSTICK_CENTER[0] - JOYSTICK_RADIUS),
+                int(JOYSTICK_CENTER[1] - JOYSTICK_RADIUS),
+            ),
+        )
+
+    def draw_radar(self):
+        rect = RADAR_RECT
+        panel = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
+        panel.fill((8, 20, 28, 190))
+        pygame.draw.rect(
+            panel,
+            (92, 170, 192, 235),
+            panel.get_rect(),
+            2,
+        )
+        for step in range(1, 4):
+            x = rect.w * step // 4
+            y = rect.h * step // 4
+            pygame.draw.line(
+                panel,
+                (64, 104, 124, 90),
+                (x, 0),
+                (x, rect.h),
+                1,
+            )
+            pygame.draw.line(
+                panel,
+                (64, 104, 124, 90),
+                (0, y),
+                (rect.w, y),
+                1,
+            )
+        SCREEN.blit(panel, rect.topleft)
+
+        for snake in self.small_snakes:
+            head = snake.head
+            dot_x = rect.x + (head.col + 0.5) / GRID_COLS * rect.w
+            dot_y = rect.y + (head.row + 0.5) / GRID_ROWS * rect.h
+            pygame.draw.circle(
+                SCREEN,
+                (238, 78, 78),
+                (int(dot_x), int(dot_y)),
+                3,
+            )
+
+        head = self.player.head
+        dot_x = rect.x + (head.col + 0.5) / GRID_COLS * rect.w
+        dot_y = rect.y + (head.row + 0.5) / GRID_ROWS * rect.h
+        pygame.draw.circle(SCREEN, (250, 255, 250), (int(dot_x), int(dot_y)), 5)
+        pygame.draw.circle(SCREEN, (56, 232, 118), (int(dot_x), int(dot_y)), 3)
+
+        leader = self.leader_snake()
+        leader_head = leader.head
+        leader_x = rect.x + (leader_head.col + 0.5) / GRID_COLS * rect.w
+        leader_y = rect.y + (leader_head.row + 0.5) / GRID_ROWS * rect.h
+        pygame.draw.circle(
+            SCREEN,
+            (255, 204, 64),
+            (int(leader_x), int(leader_y)),
+            6,
+            1,
+        )
+        crown_y = (
+            leader_y - 11
+            if leader_y - 11 > rect.y + 6
+            else leader_y + 11
+        )
+        self.draw_crown(leader_x, crown_y)
+
+    def draw_crown(self, center_x, center_y):
+        cx = int(center_x)
+        cy = int(center_y)
+        points = [
+            (cx - 6, cy + 3),
+            (cx - 6, cy - 4),
+            (cx - 3, cy - 1),
+            (cx, cy - 6),
+            (cx + 3, cy - 1),
+            (cx + 6, cy - 4),
+            (cx + 6, cy + 3),
+        ]
+        pygame.draw.polygon(SCREEN, (255, 204, 64), points)
+        pygame.draw.lines(SCREEN, (92, 62, 10), True, points, 1)
+        pygame.draw.line(
+            SCREEN,
+            (92, 62, 10),
+            (cx - 6, cy + 4),
+            (cx + 6, cy + 4),
+            2,
+        )
+
+    def draw(self):
+        interval = max(1, self.difficulty["interval"])
+        elapsed = pygame.time.get_ticks() - self.last_move
+        self.render_t = (
+            1.0
+            if self.paused
+            else max(0.0, min(1.0, elapsed / interval))
+        )
+        self.cam_x, self.cam_y = self.interpolated_head_world(self.render_t)
+        SCREEN.fill((10, 18, 26))
+        world_rect = pygame.Rect(
+            int(VIEW_CENTER_X - self.cam_x),
+            int(VIEW_CENTER_Y - self.cam_y),
+            int(WORLD_WIDTH),
+            int(WORLD_HEIGHT),
+        )
+        pygame.draw.rect(SCREEN, BOARD_COLOR, world_rect)
+        self.draw_grid(world_rect)
+        self.draw_joystick()
+        self.draw_food()
+        for snake in self.small_snakes:
+            self.draw_snake(snake)
+        self.draw_snake(self.player)
+        pygame.draw.rect(SCREEN, (56, 72, 86), world_rect, 4)
+        pygame.draw.rect(SCREEN, (120, 150, 165), world_rect.inflate(-8, -8), 1)
+        self.draw_radar()
         self.draw_notice()
+        if self.paused:
+            self.draw_paused_overlay()
         self.draw_hud()
 
     def draw_notice(self):
@@ -793,194 +1600,39 @@ class SnakeGame:
             border_radius=14,
         )
 
-        center = (WIDTH // 2, BOARD_TOP + BOARD_HEIGHT // 2)
+        center = (WIDTH // 2, HEIGHT - 48)
         box_rect = box.get_rect(center=center)
         SCREEN.blit(box, box_rect)
         text_rect = text_surface.get_rect(center=center)
         SCREEN.blit(shadow_surface, text_rect.move(2, 2))
         SCREEN.blit(text_surface, text_rect)
 
-    def body_thickness(self):
-        minimum = 8.0
-        maximum = min(CELL_WIDTH, CELL_HEIGHT) - 2
-        growth = min(1.0, self.food_eaten / 15)
-        return minimum + (maximum - minimum) * growth
+    def draw_paused_overlay(self):
+        overlay = pygame.Surface((WIDTH, BOARD_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((8, 18, 27, 112))
+        SCREEN.blit(overlay, (0, BOARD_TOP))
 
-    def draw_snake(self):
-        thickness = int(round(self.body_thickness()))
-        centers = [
-            (
-                int((self.head.col + 0.5) * CELL_WIDTH),
-                int(BOARD_TOP + (self.head.row + 0.5) * CELL_HEIGHT),
-            )
-        ]
-        centers.extend(
-            (
-                int((body.col + 0.5) * CELL_WIDTH),
-                int(BOARD_TOP + (body.row + 0.5) * CELL_HEIGHT),
-            )
-            for body in self.snake
+        panel = pygame.Rect(
+            WIDTH // 2 - 230,
+            BOARD_TOP + BOARD_HEIGHT // 2 - 76,
+            460,
+            152,
         )
-
-        for index in range(len(centers) - 1):
-            first = centers[index]
-            second = centers[index + 1]
-            if abs(first[0] - second[0]) + abs(first[1] - second[1]) > CELL_WIDTH * 1.5:
-                continue
-            pygame.draw.line(
-                SCREEN,
-                self.skin["outline"],
-                first,
-                second,
-                thickness + 4,
-            )
-        for index in range(len(centers) - 1):
-            first = centers[index]
-            second = centers[index + 1]
-            if abs(first[0] - second[0]) + abs(first[1] - second[1]) > CELL_WIDTH * 1.5:
-                continue
-            pygame.draw.line(
-                SCREEN,
-                mix_color(self.skin["body_dark"], self.skin["body"], 0.7),
-                first,
-                second,
-                thickness,
-            )
-
-        radius = max(3, thickness // 2)
-        for index, center in enumerate(centers[1:]):
-            band = (index % 4) / 3
-            body_color = mix_color(
-                self.skin["body_dark"],
-                self.skin["body"],
-                0.55 + band * 0.45,
-            )
-            pygame.draw.circle(SCREEN, body_color, center, radius)
-            highlight_center = (
-                center[0] - max(1, radius // 3),
-                center[1] - max(1, radius // 3),
-            )
-            pygame.draw.circle(
-                SCREEN,
-                self.skin["highlight"],
-                highlight_center,
-                max(1, radius // 4),
-            )
-
-        tail = centers[-1]
-        pygame.draw.circle(SCREEN, self.skin["outline"], tail, radius + 2)
-        pygame.draw.circle(
-            SCREEN,
-            mix_color(self.skin["body_dark"], self.skin["body"], 0.35),
-            tail,
-            radius,
+        pygame.draw.rect(SCREEN, (20, 36, 50), panel, border_radius=20)
+        pygame.draw.rect(SCREEN, (87, 194, 164), panel, 2, border_radius=20)
+        draw_text(
+            "游戏已暂停",
+            34,
+            TEXT_COLOR,
+            (WIDTH // 2, panel.y + 52),
+            bold=True,
         )
-
-        head_long = min(int(CELL_WIDTH) + 2, thickness + 7)
-        head_short = min(int(CELL_HEIGHT) - 2, thickness + 3)
-        if self.direction in ("left", "right"):
-            head_rect = pygame.Rect(0, 0, head_long, head_short)
-        else:
-            head_rect = pygame.Rect(0, 0, head_short, head_long)
-        head_rect.center = centers[0]
-        pygame.draw.ellipse(
-            SCREEN,
-            self.skin["outline"],
-            head_rect.inflate(5, 5),
+        draw_text(
+            "点击右上角「继续游戏」或按空格继续",
+            18,
+            MUTED_TEXT,
+            (WIDTH // 2, panel.y + 104),
         )
-        pygame.draw.ellipse(
-            SCREEN,
-            self.skin["head"],
-            head_rect,
-        )
-        snout_rect = head_rect.inflate(-max(2, head_rect.w // 3), -max(2, head_rect.h // 3))
-        snout_rect.center = (
-            head_rect.centerx + (
-                2 if self.direction == "right"
-                else -2 if self.direction == "left"
-                else 0
-            ),
-            head_rect.centery + (
-                2 if self.direction == "down"
-                else -2 if self.direction == "up"
-                else 0
-            ),
-        )
-        pygame.draw.ellipse(
-            SCREEN,
-            mix_color(self.skin["head"], self.skin["highlight"], 0.24),
-            snout_rect,
-        )
-
-        center_x, center_y = head_rect.center
-        eye_offset = max(2, head_short // 5)
-        eye_radius = max(2, head_short // 5)
-        pupil_radius = max(1, eye_radius // 2)
-        if self.direction == "left":
-            eyes = (
-                (center_x - eye_offset, center_y - eye_offset),
-                (center_x - eye_offset, center_y + eye_offset),
-            )
-            pupil_shift = (-1, 0)
-        elif self.direction == "right":
-            eyes = (
-                (center_x + eye_offset, center_y - eye_offset),
-                (center_x + eye_offset, center_y + eye_offset),
-            )
-            pupil_shift = (1, 0)
-        elif self.direction == "up":
-            eyes = (
-                (center_x - eye_offset, center_y - eye_offset),
-                (center_x + eye_offset, center_y - eye_offset),
-            )
-            pupil_shift = (0, -1)
-        else:
-            eyes = (
-                (center_x - eye_offset, center_y + eye_offset),
-                (center_x + eye_offset, center_y + eye_offset),
-            )
-            pupil_shift = (0, 1)
-        for eye in eyes:
-            pygame.draw.circle(SCREEN, (248, 252, 251), eye, eye_radius)
-            pygame.draw.circle(
-                SCREEN,
-                (18, 27, 31),
-                (eye[0] + pupil_shift[0], eye[1] + pupil_shift[1]),
-                pupil_radius,
-            )
-
-        tongue_length = max(3, thickness // 2)
-        if self.direction == "left":
-            tongue_start = (head_rect.left, center_y)
-            tongue_tip = (tongue_start[0] - tongue_length, center_y)
-            forks = (
-                (tongue_tip[0] - 2, tongue_tip[1] - 2),
-                (tongue_tip[0] - 2, tongue_tip[1] + 2),
-            )
-        elif self.direction == "right":
-            tongue_start = (head_rect.right, center_y)
-            tongue_tip = (tongue_start[0] + tongue_length, center_y)
-            forks = (
-                (tongue_tip[0] + 2, tongue_tip[1] - 2),
-                (tongue_tip[0] + 2, tongue_tip[1] + 2),
-            )
-        elif self.direction == "up":
-            tongue_start = (center_x, head_rect.top)
-            tongue_tip = (center_x, tongue_start[1] - tongue_length)
-            forks = (
-                (tongue_tip[0] - 2, tongue_tip[1] - 2),
-                (tongue_tip[0] + 2, tongue_tip[1] - 2),
-            )
-        else:
-            tongue_start = (center_x, head_rect.bottom)
-            tongue_tip = (center_x, tongue_start[1] + tongue_length)
-            forks = (
-                (tongue_tip[0] - 2, tongue_tip[1] + 2),
-                (tongue_tip[0] + 2, tongue_tip[1] + 2),
-            )
-        pygame.draw.line(SCREEN, self.skin["tongue"], tongue_start, tongue_tip, 2)
-        pygame.draw.line(SCREEN, self.skin["tongue"], tongue_tip, forks[0], 1)
-        pygame.draw.line(SCREEN, self.skin["tongue"], tongue_tip, forks[1], 1)
 
     def draw_hud(self):
         pygame.draw.rect(SCREEN, (18, 31, 42), (0, 0, WIDTH, HUD_HEIGHT))
@@ -1004,27 +1656,46 @@ class SnakeGame:
             MUTED_TEXT,
             (20, 37),
         )
+        size_level = max(
+            1,
+            int(round((self.player.thickness - PLAYER_START_THICKNESS) / 0.55)) + 1,
+        )
         draw_left_text(
-            f"身体长度 {len(self.snake) + 1}  ·  体型 {self.food_eaten + 1} 级",
+            f"长度 {len(self.player.body)}  ·  体型 {size_level} 级",
             21,
             TEXT_COLOR,
-            (230, 18),
+            (210, 18),
             bold=True,
         )
         draw_left_text(
-            f"皮肤：{self.skin['name']}",
-            19,
-            MUTED_TEXT,
-            (470, 19),
+            f"小蛇 {len(self.small_snakes)} 条  ·  已倒下 {self.small_deaths} 条",
+            20,
+            (150, 210, 235),
+            (468, 18),
+            bold=True,
         )
         draw_left_text(
-            f"难度：{self.difficulty['name']}",
-            19,
+            f"皮肤 {self.skin['name']}  ·  难度 {self.difficulty['name']}",
+            17,
             self.difficulty["color"],
-            (650, 19),
+            (212, 40),
             bold=True,
         )
-
+        mouse_pos = pygame.mouse.get_pos()
+        draw_hud_button(
+            PAUSE_BUTTON_RECT,
+            "暂停游戏",
+            mouse_pos,
+            enabled=not self.paused,
+            color=(227, 166, 58),
+        )
+        draw_hud_button(
+            RESUME_BUTTON_RECT,
+            "继续游戏",
+            mouse_pos,
+            enabled=self.paused,
+            color=ACCENT,
+        )
 
 
 def load_scores():
@@ -1092,7 +1763,12 @@ def record_score(game):
 def draw_home(selected_skin, selected_difficulty, scores, mouse_pos):
     draw_menu_background()
     draw_text("贪 吃 蛇", 66, TEXT_COLOR, (WIDTH // 2, 70), bold=True)
-    draw_text("边界墙体 · 双向传送口 · 每 5 个食物随机换墙", 21, MUTED_TEXT, (WIDTH // 2, 118))
+    draw_text(
+        "方形边界墙 · 随机食物 · 清空周围引来小蛇",
+        21,
+        MUTED_TEXT,
+        (WIDTH // 2, 118),
+    )
 
     draw_snake_art(
         (WIDTH // 2, 262),
@@ -1125,25 +1801,42 @@ def draw_home(selected_skin, selected_difficulty, scores, mouse_pos):
     else:
         draw_text("还没有游戏记录，来创造第一条成绩吧", 19, MUTED_TEXT, (WIDTH // 2, 515))
 
-    draw_text("方向键控制 · ESC 返回主页", 18, MUTED_TEXT, (WIDTH // 2, 660))
+    draw_text(
+        "右上圆盘控制方向 · 方向键 / WASD / QEZC 备用 · ESC 返回主页",
+        18,
+        MUTED_TEXT,
+        (WIDTH // 2, 660),
+    )
     return start_rect, skin_rect, difficulty_rect
 
 
 def skin_card_rects():
-    card_width = 170
-    gap = 16
-    total_width = len(SKINS) * card_width + (len(SKINS) - 1) * gap
+    per_row = 5
+    card_width = 200
+    card_height = 160
+    gap_x = 12
+    gap_y = 18
+    total_width = per_row * card_width + (per_row - 1) * gap_x
     start_x = (WIDTH - total_width) // 2
-    return [
-        pygame.Rect(start_x + index * (card_width + gap), 130, card_width, 300)
-        for index in range(len(SKINS))
-    ]
+    cards = []
+    for index in range(len(SKINS)):
+        row = index // per_row
+        col = index % per_row
+        cards.append(
+            pygame.Rect(
+                start_x + col * (card_width + gap_x),
+                120 + row * (card_height + gap_y),
+                card_width,
+                card_height,
+            )
+        )
+    return cards
 
 
 def draw_skin_page(selected_index, mouse_pos):
     draw_menu_background()
-    draw_text("选择蛇的皮肤", 50, TEXT_COLOR, (WIDTH // 2, 60), bold=True)
-    draw_text("点击卡片切换颜色", 20, MUTED_TEXT, (WIDTH // 2, 101))
+    draw_text("选择角色皮肤", 50, TEXT_COLOR, (WIDTH // 2, 60), bold=True)
+    draw_text("点击卡片切换动物 / 动漫头像", 20, MUTED_TEXT, (WIDTH // 2, 101))
 
     cards = skin_card_rects()
     for index, (card, skin) in enumerate(zip(cards, SKINS)):
@@ -1155,18 +1848,18 @@ def draw_skin_page(selected_index, mouse_pos):
         pygame.draw.rect(SCREEN, border_color, card, 4 if selected else 2, border_radius=16)
 
         draw_snake_art(
-            (card.centerx, card.y + 90),
+            (card.centerx, card.y + 45),
             skin,
             length=9,
-            spacing=10,
+            spacing=9,
             radius=7,
-            amplitude=8,
+            amplitude=7,
         )
-        draw_text(skin["name"], 27, TEXT_COLOR, (card.centerx, card.y + 195), bold=True)
+        draw_text(skin["name"], 22, TEXT_COLOR, (card.centerx, card.y + 112), bold=True)
         if selected:
-            draw_text("已选择", 20, ACCENT, (card.centerx, card.y + 245), bold=True)
+            draw_text("已选择", 16, ACCENT, (card.centerx, card.y + 140), bold=True)
         else:
-            draw_text("点击选择", 19, MUTED_TEXT, (card.centerx, card.y + 245))
+            draw_text("点击选择", 16, MUTED_TEXT, (card.centerx, card.y + 140))
 
     start_rect = pygame.Rect(419, 495, 160, 62)
     back_rect = pygame.Rect(599, 495, 140, 62)
@@ -1189,7 +1882,7 @@ def difficulty_card_rects():
 def draw_difficulty_page(selected_index, mouse_pos):
     draw_menu_background()
     draw_text("选择游戏难度", 50, TEXT_COLOR, (WIDTH // 2, 60), bold=True)
-    draw_text("难度越高，蛇移动速度越快", 20, MUTED_TEXT, (WIDTH // 2, 101))
+    draw_text("难度越高，蛇移动越快，小蛇也越多", 20, MUTED_TEXT, (WIDTH // 2, 101))
 
     cards = difficulty_card_rects()
     for index, (card, difficulty) in enumerate(zip(cards, DIFFICULTIES)):
@@ -1229,9 +1922,16 @@ def draw_difficulty_page(selected_index, mouse_pos):
             MUTED_TEXT,
             (card.centerx, card.y + 147),
         )
+        draw_text(
+            f"初始小蛇 {difficulty['small_snakes']} 条",
+            20,
+            (150, 210, 235),
+            (card.centerx, card.y + 180),
+            bold=True,
+        )
 
         bar_left = card.x + 38
-        bar_top = card.y + 180
+        bar_top = card.y + 205
         bar_width = card.w - 76
         pygame.draw.rect(
             SCREEN,
@@ -1248,9 +1948,9 @@ def draw_difficulty_page(selected_index, mouse_pos):
         )
 
         if selected:
-            draw_text("已选择", 20, difficulty["color"], (card.centerx, card.y + 235), bold=True)
+            draw_text("已选择", 20, difficulty["color"], (card.centerx, card.y + 250), bold=True)
         else:
-            draw_text("点击选择", 19, MUTED_TEXT, (card.centerx, card.y + 235))
+            draw_text("点击选择", 19, MUTED_TEXT, (card.centerx, card.y + 250))
 
     start_rect = pygame.Rect(411, 495, 170, 62)
     back_rect = pygame.Rect(601, 495, 150, 62)
@@ -1271,7 +1971,7 @@ def draw_game_over(game, scores, current_entry, rank, mouse_pos):
     summary = (
         f"本局分数：{game.score}    "
         f"身体长度：{len(game.snake) + 1}    "
-        f"难度：{game.difficulty['name']}    "
+        f"小蛇倒下：{game.small_deaths}    "
         f"排名：第 {rank} 名"
     )
     draw_text(summary, 21, (255, 226, 145), (WIDTH // 2, 147), bold=True)
@@ -1328,6 +2028,21 @@ def main():
             SKINS[selected_index],
             DIFFICULTIES[selected_difficulty_index],
         )
+
+    key_directions = {
+        pygame.K_UP: "up",
+        pygame.K_w: "up",
+        pygame.K_DOWN: "down",
+        pygame.K_s: "down",
+        pygame.K_LEFT: "left",
+        pygame.K_a: "left",
+        pygame.K_RIGHT: "right",
+        pygame.K_d: "right",
+        pygame.K_q: "up-left",
+        pygame.K_e: "up-right",
+        pygame.K_z: "down-left",
+        pygame.K_c: "down-right",
+    }
 
     while running:
         mouse_pos = pygame.mouse.get_pos()
@@ -1393,14 +2108,17 @@ def main():
                     if event.key == pygame.K_ESCAPE:
                         stop_background_music()
                         state = "home"
-                    elif event.key == pygame.K_UP:
-                        game.turn("up")
-                    elif event.key == pygame.K_DOWN:
-                        game.turn("down")
-                    elif event.key == pygame.K_LEFT:
-                        game.turn("left")
-                    elif event.key == pygame.K_RIGHT:
-                        game.turn("right")
+                    elif event.key in (pygame.K_p, pygame.K_SPACE):
+                        game.set_paused(not game.paused)
+                    elif game.paused:
+                        continue
+                    elif event.key in key_directions:
+                        game.turn(key_directions[event.key])
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if not game.paused and PAUSE_BUTTON_RECT.collidepoint(event.pos):
+                        game.set_paused(True)
+                    elif game.paused and RESUME_BUTTON_RECT.collidepoint(event.pos):
+                        game.set_paused(False)
 
             elif state == "game_over":
                 if event.type == pygame.KEYDOWN and event.key in (
@@ -1425,7 +2143,8 @@ def main():
                     elif home_rect.collidepoint(event.pos):
                         state = "home"
 
-        if state == "playing":
+        if state == "playing" and not game.paused:
+            game.update_pointer(mouse_pos)
             now = pygame.time.get_ticks()
             if now - game.last_move >= game.difficulty["interval"]:
                 game.last_move = now
@@ -1467,3 +2186,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+

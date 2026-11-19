@@ -7,6 +7,13 @@
     "date": "2026-11-17 21:28"
   },
   {
+    "score": 210,
+    "length": 25,
+    "difficulty": "简单",
+    "skin": "红蛇",
+    "date": "2026-11-19 10:33"
+  },
+  {
     "score": 150,
     "length": 19,
     "difficulty": "中等",
@@ -40,6 +47,13 @@
     "difficulty": "未知",
     "skin": "红蛇",
     "date": "2026-11-17 21:14"
+  },
+  {
+    "score": 80,
+    "length": 12,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 22:01"
   },
   {
     "score": 60,
@@ -106,6 +120,27 @@
   },
   {
     "score": 40,
+    "length": 10,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 21:47"
+  },
+  {
+    "score": 40,
+    "length": 10,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 22:02"
+  },
+  {
+    "score": 40,
+    "length": 10,
+    "difficulty": "中等",
+    "skin": "粉发少女",
+    "date": "2026-11-19 22:26"
+  },
+  {
+    "score": 40,
     "length": 8,
     "difficulty": "未知",
     "skin": "红蛇",
@@ -124,6 +159,13 @@
     "difficulty": "中等",
     "skin": "红蛇",
     "date": "2026-11-17 22:25"
+  },
+  {
+    "score": 30,
+    "length": 8,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 21:57"
   },
   {
     "score": 30,
@@ -148,6 +190,13 @@
   },
   {
     "score": 20,
+    "length": 10,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 21:22"
+  },
+  {
+    "score": 20,
     "length": 6,
     "difficulty": "未知",
     "skin": "红蛇",
@@ -159,6 +208,55 @@
     "difficulty": "很难",
     "skin": "红蛇",
     "date": "2026-11-17 22:07"
+  },
+  {
+    "score": 20,
+    "length": 6,
+    "difficulty": "简单",
+    "skin": "红蛇",
+    "date": "2026-11-19 10:29"
+  },
+  {
+    "score": 10,
+    "length": 8,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 21:47"
+  },
+  {
+    "score": 10,
+    "length": 8,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 21:47"
+  },
+  {
+    "score": 10,
+    "length": 8,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 21:57"
+  },
+  {
+    "score": 10,
+    "length": 7,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 22:02"
+  },
+  {
+    "score": 10,
+    "length": 7,
+    "difficulty": "中等",
+    "skin": "橘猫",
+    "date": "2026-11-19 22:22"
+  },
+  {
+    "score": 10,
+    "length": 7,
+    "difficulty": "中等",
+    "skin": "粉发少女",
+    "date": "2026-11-19 22:23"
   },
   {
     "score": 10,
@@ -201,6 +299,48 @@
     "difficulty": "中等",
     "skin": "黑蛇",
     "date": "2026-11-17 22:27"
+  },
+  {
+    "score": 0,
+    "length": 6,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 21:48"
+  },
+  {
+    "score": 0,
+    "length": 6,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 21:57"
+  },
+  {
+    "score": 0,
+    "length": 6,
+    "difficulty": "简单",
+    "skin": "红蛇",
+    "date": "2026-11-19 21:58"
+  },
+  {
+    "score": 0,
+    "length": 6,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 22:01"
+  },
+  {
+    "score": 0,
+    "length": 6,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 22:01"
+  },
+  {
+    "score": 0,
+    "length": 6,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 22:02"
   },
   {
     "score": 0,
@@ -334,5 +474,26 @@
     "difficulty": "中等",
     "skin": "红蛇",
     "date": "2026-11-18 10:23"
+  },
+  {
+    "score": 0,
+    "length": 4,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 10:53"
+  },
+  {
+    "score": 0,
+    "length": 4,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 10:53"
+  },
+  {
+    "score": 0,
+    "length": 4,
+    "difficulty": "中等",
+    "skin": "红蛇",
+    "date": "2026-11-19 21:12"
   }
 ]
