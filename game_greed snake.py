@@ -35,6 +35,8 @@ WALL_COLOR = (83, 96, 111)
 WALL_EDGE = (49, 59, 72)
 PORTAL_COLOR = (74, 225, 214)
 PORTAL_CORE = (11, 31, 39)
+PAUSE_BUTTON_RECT = pygame.Rect(842, 10, 132, 40)
+RESUME_BUTTON_RECT = pygame.Rect(986, 10, 148, 40)
 
 SKINS = [
     {
@@ -293,6 +295,25 @@ def draw_button(rect, label, mouse_pos, color=ACCENT, text_color=(10, 33, 26)):
     draw_text(label, 25, text_color, rect.center, bold=True)
 
 
+def draw_hud_button(rect, label, mouse_pos, enabled, color):
+    hovered = enabled and rect.collidepoint(mouse_pos)
+    shadow_rect = rect.move(0, 3)
+    pygame.draw.rect(SCREEN, (9, 20, 28), shadow_rect, border_radius=10)
+
+    if enabled:
+        button_color = lighten(color, 22) if hovered else color
+        border_color = lighten(color, 45)
+        text_color = (23, 32, 28)
+    else:
+        button_color = (45, 61, 71)
+        border_color = (69, 87, 99)
+        text_color = (125, 145, 154)
+
+    pygame.draw.rect(SCREEN, button_color, rect, border_radius=10)
+    pygame.draw.rect(SCREEN, border_color, rect, 2, border_radius=10)
+    draw_text(label, 18, text_color, rect.center, bold=True)
+
+
 def build_menu_background():
     surface = pygame.Surface((WIDTH, HEIGHT))
     for y in range(HEIGHT):
@@ -529,6 +550,7 @@ class SnakeGame:
         self.notice_started_at = 0
         self.notice_duration = 0
         self.notice_color = ACCENT
+        self.paused = False
         self.show_notice("游戏开始！方向键控制移动", ACCENT, 2400)
 
     def show_notice(self, message, color=ACCENT, duration=1800):
@@ -565,6 +587,13 @@ class SnakeGame:
         }
         if direction != opposite[self.direction]:
             self.next_direction = direction
+
+    def set_paused(self, paused):
+        if self.paused == paused:
+            return
+        self.paused = paused
+        if not paused:
+            self.last_move = pygame.time.get_ticks()
 
     def food_is_reachable(self, walls, portals=None):
         if self.food is None:
@@ -753,6 +782,8 @@ class SnakeGame:
 
         self.draw_snake()
         self.draw_notice()
+        if self.paused:
+            self.draw_paused_overlay()
         self.draw_hud()
 
     def draw_notice(self):
@@ -799,6 +830,33 @@ class SnakeGame:
         text_rect = text_surface.get_rect(center=center)
         SCREEN.blit(shadow_surface, text_rect.move(2, 2))
         SCREEN.blit(text_surface, text_rect)
+
+    def draw_paused_overlay(self):
+        overlay = pygame.Surface((WIDTH, BOARD_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((8, 18, 27, 112))
+        SCREEN.blit(overlay, (0, BOARD_TOP))
+
+        panel = pygame.Rect(
+            WIDTH // 2 - 230,
+            BOARD_TOP + BOARD_HEIGHT // 2 - 76,
+            460,
+            152,
+        )
+        pygame.draw.rect(SCREEN, (20, 36, 50), panel, border_radius=20)
+        pygame.draw.rect(SCREEN, (87, 194, 164), panel, 2, border_radius=20)
+        draw_text(
+            "游戏已暂停",
+            34,
+            TEXT_COLOR,
+            (WIDTH // 2, panel.y + 52),
+            bold=True,
+        )
+        draw_text(
+            "点击右上角“继续游戏”或按空格键继续",
+            18,
+            MUTED_TEXT,
+            (WIDTH // 2, panel.y + 104),
+        )
 
     def body_thickness(self):
         minimum = 8.0
@@ -1023,6 +1081,21 @@ class SnakeGame:
             self.difficulty["color"],
             (650, 19),
             bold=True,
+        )
+        mouse_pos = pygame.mouse.get_pos()
+        draw_hud_button(
+            PAUSE_BUTTON_RECT,
+            "暂停游戏",
+            mouse_pos,
+            enabled=not self.paused,
+            color=(227, 166, 58),
+        )
+        draw_hud_button(
+            RESUME_BUTTON_RECT,
+            "继续游戏",
+            mouse_pos,
+            enabled=self.paused,
+            color=ACCENT,
         )
 
 
@@ -1393,6 +1466,10 @@ def main():
                     if event.key == pygame.K_ESCAPE:
                         stop_background_music()
                         state = "home"
+                    elif event.key in (pygame.K_p, pygame.K_SPACE):
+                        game.set_paused(not game.paused)
+                    elif game.paused:
+                        continue
                     elif event.key == pygame.K_UP:
                         game.turn("up")
                     elif event.key == pygame.K_DOWN:
@@ -1401,6 +1478,17 @@ def main():
                         game.turn("left")
                     elif event.key == pygame.K_RIGHT:
                         game.turn("right")
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    if (
+                        not game.paused
+                        and PAUSE_BUTTON_RECT.collidepoint(event.pos)
+                    ):
+                        game.set_paused(True)
+                    elif (
+                        game.paused
+                        and RESUME_BUTTON_RECT.collidepoint(event.pos)
+                    ):
+                        game.set_paused(False)
 
             elif state == "game_over":
                 if event.type == pygame.KEYDOWN and event.key in (
@@ -1425,7 +1513,7 @@ def main():
                     elif home_rect.collidepoint(event.pos):
                         state = "home"
 
-        if state == "playing":
+        if state == "playing" and not game.paused:
             now = pygame.time.get_ticks()
             if now - game.last_move >= game.difficulty["interval"]:
                 game.last_move = now
