@@ -31,6 +31,8 @@ JOYSTICK_CENTER = (WIDTH - 132, BOARD_TOP + 138)
 JOYSTICK_DEADZONE = 16
 
 SCORE_FILE = Path(__file__).resolve().with_name("snake_scores.json")
+ASSET_DIR = Path(__file__).resolve().with_name("assets")
+PORTRAIT_DIR = ASSET_DIR / "portraits"
 
 BG_TOP = (14, 26, 43)
 BG_BOTTOM = (27, 49, 70)
@@ -56,6 +58,16 @@ MAX_EXTRA_SNAKES = 2
 CLEAR_SCORE = 20
 FULL_CLEAR_SCORE = 100
 REINFORCEMENT_THICKNESS = 8.0
+
+TEAM_COLS = 120
+TEAM_ROWS = 120
+TEAM_MATCH_MS = 5 * 60 * 1000
+TEAM_FOOD_TARGET = 70
+TEAM_MEMBERS = 5
+TEAM_RESPAWN_MS = 2800
+TEAM_FOOD_SCORE = 10
+TEAM_KILL_SCORE = 25
+TEAM_INTERVAL_MS = 130
 
 DIRECTION_STEPS = {
     "up": (0, -1),
@@ -213,6 +225,131 @@ SKINS = [
     },
 ]
 
+
+def _rgb_lighten(color, amount):
+    return tuple(min(255, value + amount) for value in color)
+
+
+def make_skin(
+    name,
+    avatar,
+    body,
+    body_dark,
+    head,
+    outline,
+    accent,
+    pattern="plain",
+    eye=(40, 40, 40),
+    **extra
+):
+    skin = {
+        "name": name,
+        "avatar": avatar,
+        "pattern": pattern,
+        "body": body,
+        "body_dark": body_dark,
+        "head": head,
+        "outline": outline,
+        "highlight": _rgb_lighten(body, 45),
+        "belly": _rgb_lighten(head, 30),
+        "accent": accent,
+        "eye": eye,
+    }
+    skin.update(extra)
+    return skin
+
+
+ZODIAC_SKINS = [
+    make_skin("灵鼠", "mouse", (170, 170, 185), (120, 120, 140), (225, 220, 220), (55, 50, 60), (255, 170, 180)),
+    make_skin("金牛", "ox", (200, 150, 80), (140, 95, 45), (235, 200, 150), (70, 45, 20), (255, 230, 160)),
+    make_skin("白虎", "tiger", (235, 235, 240), (130, 135, 150), (250, 250, 252), (70, 75, 90), (120, 120, 130), "stripes"),
+    make_skin("玉兔", "rabbit", (246, 230, 238), (212, 184, 200), (255, 248, 252), (110, 78, 94), (255, 150, 180)),
+    make_skin("青龙", "dragon", (80, 200, 190), (30, 130, 130), (150, 240, 230), (10, 60, 60), (255, 220, 120), "stripes"),
+    make_skin("青蛇", "snake", (90, 190, 110), (35, 120, 60), (160, 230, 170), (12, 55, 25), (255, 180, 120), "spots"),
+    make_skin("天马", "horse", (210, 220, 250), (140, 150, 200), (245, 245, 255), (60, 60, 100), (255, 220, 150)),
+    make_skin("山羊", "goat", (240, 225, 190), (190, 165, 120), (255, 245, 220), (90, 70, 40), (180, 140, 90)),
+    make_skin("金猴", "monkey", (230, 180, 90), (170, 120, 50), (250, 215, 160), (80, 50, 20), (255, 230, 180)),
+    make_skin("锦鸡", "rooster", (235, 120, 60), (170, 60, 30), (255, 200, 120), (80, 30, 10), (255, 80, 80), "spots"),
+    make_skin("瑞狗", "shiba", (210, 160, 100), (150, 100, 55), (240, 200, 150), (75, 45, 20), (255, 240, 220)),
+    make_skin("福猪", "pig", (245, 170, 180), (200, 110, 130), (255, 210, 215), (95, 45, 60), (255, 120, 140)),
+]
+
+BOONIE_SKINS = [
+    make_skin("熊大", "bear", (150, 100, 60), (95, 60, 35), (200, 150, 95), (50, 30, 15), (255, 220, 180)),
+    make_skin("熊二", "bear", (190, 140, 85), (130, 85, 45), (225, 180, 120), (60, 35, 15), (255, 230, 190)),
+    make_skin("光头强", "anime", (245, 200, 160), (180, 120, 80), (255, 220, 185), (70, 45, 30), (80, 60, 40), hair=(40, 35, 30)),
+    make_skin("吉吉国王", "monkey", (160, 110, 60), (100, 65, 30), (220, 170, 110), (50, 30, 10), (255, 220, 160)),
+    make_skin("毛毛", "monkey", (190, 140, 85), (130, 85, 45), (230, 185, 130), (60, 35, 15), (255, 230, 180)),
+    make_skin("蹦蹦", "rabbit", (235, 210, 170), (185, 155, 115), (250, 235, 205), (90, 65, 35), (255, 180, 150)),
+    make_skin("涂涂", "bird", (130, 170, 200), (70, 110, 150), (220, 235, 245), (30, 50, 70), (255, 190, 80)),
+    make_skin("萝卜头", "mouse", (230, 150, 70), (170, 90, 35), (250, 200, 130), (80, 40, 10), (255, 230, 180)),
+    make_skin("肥波", "cat", (150, 155, 165), (100, 105, 115), (210, 215, 220), (45, 50, 60), (255, 190, 190)),
+    make_skin("老鳄", "croc", (90, 160, 80), (50, 110, 45), (150, 200, 120), (20, 60, 20), (250, 240, 200)),
+    make_skin("翠花", "bear", (210, 150, 140), (155, 95, 90), (235, 190, 180), (75, 40, 40), (255, 220, 210)),
+    make_skin("纳雅", "anime", (90, 190, 180), (50, 130, 125), (255, 225, 205), (30, 70, 70), (255, 200, 120), hair=(40, 90, 90)),
+]
+
+GOAT_SKINS = [
+    make_skin("喜羊羊", "goat", (245, 245, 245), (190, 195, 205), (255, 255, 255), (80, 85, 95), (255, 210, 80)),
+    make_skin("美羊羊", "goat", (250, 210, 225), (210, 150, 170), (255, 235, 240), (110, 60, 75), (255, 150, 180)),
+    make_skin("懒羊羊", "goat", (250, 235, 190), (210, 185, 130), (255, 248, 220), (100, 80, 40), (255, 180, 120)),
+    make_skin("沸羊羊", "goat", (220, 170, 110), (170, 115, 60), (245, 210, 160), (85, 50, 20), (255, 120, 80)),
+    make_skin("暖羊羊", "goat", (230, 235, 240), (175, 185, 195), (250, 250, 255), (80, 90, 100), (255, 180, 160)),
+    make_skin("慢羊羊", "goat", (200, 200, 190), (150, 150, 140), (235, 235, 225), (75, 75, 65), (200, 200, 180)),
+    make_skin("灰太狼", "wolf", (130, 140, 155), (80, 90, 105), (190, 200, 210), (35, 40, 50), (255, 200, 120)),
+    make_skin("红太狼", "wolf", (220, 90, 80), (150, 45, 45), (245, 170, 150), (75, 20, 20), (255, 220, 180)),
+    make_skin("小灰灰", "wolf", (180, 190, 200), (125, 135, 150), (225, 230, 235), (55, 65, 75), (255, 220, 160)),
+    make_skin("蕉太狼", "wolf", (230, 200, 90), (170, 140, 45), (250, 230, 150), (80, 65, 20), (255, 240, 180)),
+    make_skin("潇洒哥", "anime", (245, 245, 250), (190, 190, 210), (255, 255, 255), (80, 80, 110), (120, 180, 255), hair=(255, 255, 255)),
+    make_skin("黑大帅", "anime", (60, 60, 75), (30, 30, 40), (90, 90, 110), (10, 10, 15), (180, 80, 220), hair=(20, 20, 30)),
+]
+
+GG_SKINS = [
+    make_skin("猪猪侠", "pig", (230, 80, 70), (165, 45, 40), (255, 190, 170), (80, 20, 20), (255, 220, 120)),
+    make_skin("菲菲", "pig", (250, 170, 190), (205, 110, 140), (255, 210, 220), (100, 45, 65), (255, 120, 160)),
+    make_skin("小呆呆", "pig", (120, 180, 230), (70, 120, 180), (200, 230, 250), (30, 60, 100), (255, 230, 160)),
+    make_skin("超人强", "anime", (80, 130, 220), (45, 80, 160), (255, 215, 185), (25, 45, 90), (255, 220, 80), hair=(40, 60, 120)),
+    make_skin("波比", "pig", (245, 200, 80), (190, 150, 40), (255, 230, 160), (90, 65, 15), (255, 120, 100)),
+    make_skin("迷糊老师", "anime", (160, 165, 175), (110, 115, 125), (235, 220, 200), (50, 55, 65), (120, 200, 255), hair=(80, 80, 90)),
+    make_skin("玫瑰王子", "anime", (180, 120, 220), (125, 75, 165), (255, 220, 210), (65, 30, 90), (255, 160, 200), hair=(120, 60, 160)),
+    make_skin("白雪", "anime", (245, 245, 255), (190, 195, 220), (255, 240, 235), (85, 85, 120), (180, 220, 255), hair=(240, 240, 255)),
+    make_skin("小圣", "robot", (230, 190, 70), (170, 135, 35), (255, 230, 150), (80, 60, 15), (120, 230, 255)),
+    make_skin("暗影", "robot", (55, 60, 80), (25, 28, 40), (90, 100, 130), (5, 8, 15), (180, 80, 255)),
+    make_skin("铁拳虎", "robot", (230, 130, 60), (170, 80, 30), (250, 190, 120), (70, 30, 10), (120, 220, 255)),
+    make_skin("五灵王", "anime", (200, 190, 100), (140, 130, 50), (240, 230, 170), (65, 60, 20), (120, 255, 180), hair=(80, 70, 30)),
+]
+
+ULTRA_SKINS = [
+    make_skin("初代奥特曼", "ultra", (220, 225, 235), (160, 170, 190), (240, 245, 255), (70, 75, 95), (230, 60, 60), eye=(255, 230, 80)),
+    make_skin("赛文", "ultra", (220, 70, 70), (150, 40, 45), (230, 235, 245), (70, 25, 30), (230, 60, 60), eye=(255, 230, 80)),
+    make_skin("杰克", "ultra", (210, 215, 230), (150, 160, 185), (240, 245, 255), (60, 70, 95), (220, 70, 70), eye=(255, 235, 90)),
+    make_skin("艾斯", "ultra", (80, 130, 210), (45, 85, 155), (230, 240, 255), (25, 45, 90), (220, 70, 70), eye=(140, 220, 255)),
+    make_skin("泰罗", "ultra", (220, 75, 70), (150, 45, 45), (245, 235, 210), (75, 30, 25), (255, 205, 70), eye=(255, 230, 80)),
+    make_skin("雷欧", "ultra", (190, 60, 60), (120, 30, 35), (230, 220, 220), (55, 20, 20), (240, 200, 80), eye=(255, 220, 70)),
+    make_skin("迪迦", "ultra", (150, 120, 220), (95, 75, 160), (235, 240, 255), (45, 35, 85), (220, 180, 70), eye=(255, 240, 120)),
+    make_skin("戴拿", "ultra", (70, 140, 220), (35, 90, 160), (235, 245, 255), (20, 45, 85), (230, 70, 70), eye=(140, 230, 255)),
+    make_skin("盖亚", "ultra", (210, 70, 70), (145, 40, 45), (240, 235, 225), (70, 25, 25), (255, 205, 70), eye=(255, 230, 80)),
+    make_skin("高斯", "ultra", (90, 170, 230), (45, 110, 170), (240, 250, 255), (25, 55, 90), (220, 220, 240), eye=(255, 240, 140)),
+    make_skin("赛罗", "ultra", (60, 110, 210), (30, 65, 150), (235, 245, 255), (15, 30, 80), (225, 70, 70), eye=(255, 235, 90)),
+    make_skin("泽塔", "ultra", (200, 215, 235), (135, 155, 185), (245, 250, 255), (55, 70, 100), (220, 80, 80), eye=(140, 230, 255)),
+]
+
+SKIN_GROUPS = [
+    {"key": "classic", "name": "经典", "skins": SKINS},
+    {"key": "zodiac", "name": "生肖", "skins": ZODIAC_SKINS},
+    {"key": "boonie", "name": "熊出没", "skins": BOONIE_SKINS},
+    {"key": "goat", "name": "喜羊羊", "skins": GOAT_SKINS},
+    {"key": "gg", "name": "猪猪侠", "skins": GG_SKINS},
+    {"key": "ultra", "name": "奥特曼", "skins": ULTRA_SKINS},
+]
+
+for _group in SKIN_GROUPS:
+    for _skin in _group["skins"]:
+        _skin.setdefault("group", _group["name"])
+
+ALL_SKINS = [skin for group in SKIN_GROUPS for skin in group["skins"]]
+
+
 DIFFICULTIES = [
     {
         "name": "简单",
@@ -243,11 +380,65 @@ DIFFICULTIES = [
     },
 ]
 
+TEAMS = [
+    {
+        "name": "生肖队",
+        "short": "生肖",
+        "body": (220, 62, 62),
+        "body_dark": (150, 34, 44),
+        "outline": (70, 16, 22),
+        "highlight": (255, 150, 150),
+        "text_color": (255, 245, 245),
+        "skins": ZODIAC_SKINS,
+    },
+    {
+        "name": "熊出没队",
+        "short": "熊出没",
+        "body": (64, 124, 220),
+        "body_dark": (36, 74, 160),
+        "outline": (16, 34, 80),
+        "highlight": (150, 190, 255),
+        "text_color": (245, 250, 255),
+        "skins": BOONIE_SKINS,
+    },
+    {
+        "name": "喜羊羊与灰太狼队",
+        "short": "喜羊羊",
+        "body": (70, 190, 110),
+        "body_dark": (34, 125, 70),
+        "outline": (14, 60, 30),
+        "highlight": (160, 240, 190),
+        "text_color": (245, 255, 248),
+        "skins": GOAT_SKINS,
+    },
+    {
+        "name": "猪猪侠队",
+        "short": "猪猪侠",
+        "body": (52, 56, 66),
+        "body_dark": (24, 26, 32),
+        "outline": (8, 9, 12),
+        "highlight": (130, 140, 155),
+        "text_color": (245, 248, 255),
+        "skins": GG_SKINS,
+    },
+    {
+        "name": "奥特曼队",
+        "short": "奥特曼",
+        "body": (244, 246, 252),
+        "body_dark": (188, 194, 212),
+        "outline": (80, 88, 110),
+        "highlight": (255, 255, 255),
+        "text_color": (30, 38, 52),
+        "skins": ULTRA_SKINS,
+    },
+]
+
+
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.init()
 AUDIO_ENABLED = pygame.mixer.get_init() is not None
 SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("贪吃蛇 - 蛇群争食")
+pygame.display.set_caption("贪吃蛇 - 蛇群争食 / 5 队团队赛")
 CLOCK = pygame.time.Clock()
 
 FONT_PATHS = [
@@ -257,6 +448,8 @@ FONT_PATHS = [
 ]
 FONT_PATH = next((path for path in FONT_PATHS if path.exists()), None)
 FONT_CACHE = {}
+PORTRAIT_CACHE = {}
+PORTRAIT_SCALED_CACHE = {}
 
 
 def create_note_sound(notes, volume):
@@ -383,6 +576,25 @@ def grid_distance(first, second):
     return abs(first.col - second.col) + abs(first.row - second.row)
 
 
+def same_team(first, second):
+    return first.team_id is not None and first.team_id == second.team_id
+
+
+def orientation(first, second, third):
+    return (
+        (second.col - first.col) * (third.row - first.row)
+        - (second.row - first.row) * (third.col - first.col)
+    )
+
+
+def segments_cross(a_start, a_end, b_start, b_end):
+    first_side = orientation(a_start, a_end, b_start)
+    second_side = orientation(a_start, a_end, b_end)
+    third_side = orientation(b_start, b_end, a_start)
+    fourth_side = orientation(b_start, b_end, a_end)
+    return first_side * second_side < 0 and third_side * fourth_side < 0
+
+
 class Point:
     __slots__ = ("col", "row")
 
@@ -395,13 +607,29 @@ class Point:
 
 
 class Snake:
-    def __init__(self, body, direction, skin, thickness, is_player=False):
+    def __init__(
+        self,
+        body,
+        direction,
+        skin,
+        thickness,
+        is_player=False,
+        team_id=None,
+        name=None,
+    ):
         self.body = [part.copy() for part in body]
         self.direction = direction
         self.skin = skin
         self.thickness = thickness
         self.is_player = is_player
+        self.team_id = team_id
+        self.name = name or skin["name"]
+        self.base_skin = skin
         self.eaten = 0
+        self.score = 0
+        self.kills = 0
+        self.alive = True
+        self.death_reason = ""
 
     @property
     def head(self):
@@ -446,6 +674,23 @@ def mix_color(first, second, ratio):
         int(first[index] * (1 - ratio) + second[index] * ratio)
         for index in range(3)
     )
+
+
+def team_skin(skin, team):
+    result = dict(skin)
+    result["body"] = team["body"]
+    result["body_dark"] = team["body_dark"]
+    result["outline"] = team["outline"]
+    result["highlight"] = team["highlight"]
+    result["belly"] = lighten(team["body"], 42)
+    return result
+
+
+def team_ui_color(team):
+    red, green, blue = team["body"]
+    if red + green + blue < 300:
+        return team["highlight"]
+    return team["body"]
 
 
 def draw_button(rect, label, mouse_pos, color=ACCENT, text_color=(10, 33, 26)):
@@ -594,9 +839,200 @@ def draw_avatar(surface, center, radius, skin):
             )
         ear(-1, 1.20, 0.30, accent)
         ear(1, 1.20, 0.30, accent)
+    elif kind == "mouse":
+        for sign in (-1, 1):
+            pygame.draw.circle(
+                surface,
+                outline,
+                (cx + int(sign * r * 0.62), cy - int(r * 0.72)),
+                max(3, int(r * 0.40)),
+            )
+            pygame.draw.circle(
+                surface,
+                face,
+                (cx + int(sign * r * 0.62), cy - int(r * 0.72)),
+                max(2, int(r * 0.30)),
+            )
+            pygame.draw.circle(
+                surface,
+                accent,
+                (cx + int(sign * r * 0.62), cy - int(r * 0.72)),
+                max(1, int(r * 0.16)),
+            )
+    elif kind == "bear":
+        for sign in (-1, 1):
+            pygame.draw.circle(
+                surface,
+                outline,
+                (cx + int(sign * r * 0.62), cy - int(r * 0.70)),
+                max(3, int(r * 0.34)),
+            )
+            pygame.draw.circle(
+                surface,
+                body,
+                (cx + int(sign * r * 0.62), cy - int(r * 0.70)),
+                max(2, int(r * 0.25)),
+            )
+    elif kind == "goat":
+        for sign in (-1, 1):
+            points = [
+                (cx + sign * r * 0.30, cy - r * 0.72),
+                (cx + sign * r * 0.52, cy - r * 1.22),
+                (cx + sign * r * 0.86, cy - r * 1.02),
+            ]
+            poly(accent, points)
+            poly(outline, points, 2)
+        ear(-1, 1.10, 0.30, face)
+        ear(1, 1.10, 0.30, face)
+    elif kind == "pig":
+        for sign in (-1, 1):
+            pygame.draw.circle(
+                surface,
+                outline,
+                (cx + int(sign * r * 0.58), cy - int(r * 0.68)),
+                max(3, int(r * 0.30)),
+            )
+            pygame.draw.circle(
+                surface,
+                body,
+                (cx + int(sign * r * 0.58), cy - int(r * 0.68)),
+                max(2, int(r * 0.22)),
+            )
+    elif kind == "wolf":
+        ear(-1, 1.48, 0.46, accent)
+        ear(1, 1.48, 0.46, accent)
+    elif kind == "monkey":
+        for sign in (-1, 1):
+            pygame.draw.circle(
+                surface,
+                outline,
+                (cx + int(sign * r * 0.68), cy - int(r * 0.55)),
+                max(3, int(r * 0.30)),
+            )
+            pygame.draw.circle(
+                surface,
+                face,
+                (cx + int(sign * r * 0.68), cy - int(r * 0.55)),
+                max(2, int(r * 0.22)),
+            )
+    elif kind == "horse":
+        ear(-1, 1.18, 0.28, accent)
+        ear(1, 1.18, 0.28, accent)
+        poly(
+            dark,
+            [
+                (cx - r * 0.70, cy - r * 0.75),
+                (cx - r * 0.05, cy - r * 1.10),
+                (cx + r * 0.30, cy - r * 0.85),
+                (cx - r * 0.10, cy - r * 0.45),
+            ],
+        )
+    elif kind == "rooster":
+        for offset in (-0.30, 0.0, 0.30):
+            pygame.draw.circle(
+                surface,
+                (220, 60, 60),
+                (cx + int(r * offset), cy - int(r * 0.98)),
+                max(2, int(r * 0.16)),
+            )
+            pygame.draw.circle(
+                surface,
+                outline,
+                (cx + int(r * offset), cy - int(r * 0.98)),
+                max(2, int(r * 0.16)),
+                1,
+            )
+    elif kind == "snake":
+        pygame.draw.circle(surface, body, (cx, cy), r + 4)
+    elif kind == "croc":
+        for sign in (-1, 1):
+            pygame.draw.circle(
+                surface,
+                outline,
+                (cx + int(sign * r * 0.45), cy - int(r * 0.75)),
+                max(2, int(r * 0.16)),
+            )
+            pygame.draw.circle(
+                surface,
+                face,
+                (cx + int(sign * r * 0.45), cy - int(r * 0.75)),
+                max(2, int(r * 0.12)),
+            )
+    elif kind == "bird":
+        poly(
+            accent,
+            [
+                (cx - r * 0.18, cy - r * 0.90),
+                (cx, cy - r * 1.30),
+                (cx + r * 0.18, cy - r * 0.90),
+            ],
+        )
+    elif kind == "ox":
+        for sign in (-1, 1):
+            points = [
+                (cx + sign * r * 0.34, cy - r * 0.72),
+                (cx + sign * r * 0.72, cy - r * 1.20),
+                (cx + sign * r * 0.94, cy - r * 0.92),
+            ]
+            poly(accent, points)
+            poly(outline, points, 2)
+        ear(-1, 1.15, 0.32, face)
+        ear(1, 1.15, 0.32, face)
+    elif kind == "ultra":
+        poly(
+            (220, 60, 60),
+            [
+                (cx, cy - r * 1.85),
+                (cx - r * 0.16, cy - r * 0.85),
+                (cx + r * 0.16, cy - r * 0.85),
+            ],
+        )
+        poly(
+            outline,
+            [
+                (cx, cy - r * 1.85),
+                (cx - r * 0.16, cy - r * 0.85),
+                (cx + r * 0.16, cy - r * 0.85),
+            ],
+            1,
+        )
+    elif kind == "robot":
+        pygame.draw.line(
+            surface,
+            outline,
+            (cx, cy - r),
+            (cx, cy - r * 1.55),
+            max(1, int(r * 0.10)),
+        )
+        pygame.draw.circle(
+            surface,
+            accent,
+            (cx, cy - int(r * 1.58)),
+            max(2, int(r * 0.15)),
+        )
 
     pygame.draw.circle(surface, outline, (cx, cy), r + 2)
     pygame.draw.circle(surface, face, (cx, cy), r)
+    if r >= 18:
+        pygame.draw.circle(
+            surface,
+            mix_color(face, (255, 255, 255), 0.30),
+            (cx - int(r * 0.36), cy - int(r * 0.44)),
+            max(2, int(r * 0.18)),
+        )
+        pygame.draw.arc(
+            surface,
+            mix_color(face, outline, 0.20),
+            pygame.Rect(
+                cx - r + 2,
+                cy - r + 2,
+                max(2, 2 * r - 4),
+                max(2, 2 * r - 4),
+            ),
+            0,
+            math.pi,
+            max(1, int(r * 0.06)),
+        )
 
     if kind == "penguin":
         ell((248, 250, 252), cx, cy + r * 0.16, r * 0.78, r * 0.64)
@@ -613,6 +1049,15 @@ def draw_avatar(surface, center, radius, skin):
                 (cx + r * 0.98, cy - r * 0.15),
             ],
         )
+        if r >= 18:
+            for offset in (-0.55, -0.15, 0.25):
+                pygame.draw.line(
+                    surface,
+                    mix_color(hair, (255, 255, 255), 0.40),
+                    (cx + int(r * offset), cy - int(r * 0.80)),
+                    (cx + int(r * (offset + 0.18)), cy - int(r * 0.45)),
+                    max(1, int(r * 0.06)),
+                )
     elif kind == "unicorn":
         for index in range(3):
             pygame.draw.circle(
@@ -622,6 +1067,142 @@ def draw_avatar(surface, center, radius, skin):
                 max(2, int(r * 0.18)),
             )
 
+    if kind == "pig":
+        ell((255, 180, 190), cx, cy + r * 0.18, r * 0.40, r * 0.26)
+        for sign in (-1, 1):
+            pygame.draw.circle(
+                surface,
+                outline,
+                (cx + int(sign * r * 0.13), cy + int(r * 0.18)),
+                max(1, int(r * 0.05)),
+            )
+    elif kind == "goat":
+        ell(face, cx, cy + r * 0.42, r * 0.24, r * 0.34)
+        pygame.draw.line(
+            surface,
+            outline,
+            (cx - r * 0.10, cy + r * 0.42),
+            (cx + r * 0.10, cy + r * 0.42),
+            max(1, int(r * 0.05)),
+        )
+    elif kind == "wolf":
+        ell(face, cx, cy + r * 0.24, r * 0.32, r * 0.22)
+        pygame.draw.circle(
+            surface,
+            outline,
+            (cx, cy + int(r * 0.16)),
+            max(1, int(r * 0.06)),
+        )
+    elif kind == "mouse":
+        ell(face, cx, cy + r * 0.28, r * 0.20, r * 0.14)
+        pygame.draw.circle(
+            surface,
+            (255, 160, 170),
+            (cx, cy + int(r * 0.26)),
+            max(1, int(r * 0.05)),
+        )
+    elif kind == "ultra":
+        for sign in (-1, 1):
+            pygame.draw.line(
+                surface,
+                (220, 60, 60),
+                (cx + sign * int(r * 0.72), cy - int(r * 0.28)),
+                (cx + sign * int(r * 0.92), cy + int(r * 0.22)),
+                max(1, int(r * 0.10)),
+            )
+    elif kind == "robot":
+        visor = pygame.Rect(
+            cx - int(r * 0.62),
+            cy - int(r * 0.28),
+            int(r * 1.24),
+            int(r * 0.46),
+        )
+        pygame.draw.rect(surface, (18, 28, 38), visor, border_radius=max(2, int(r * 0.12)))
+        pygame.draw.rect(
+            surface,
+            (90, 220, 255),
+            visor,
+            2,
+            border_radius=max(2, int(r * 0.12)),
+        )
+
+    if kind == "monkey":
+        ell(lighten(face, 18), cx, cy + r * 0.05, r * 0.60, r * 0.55)
+    elif kind == "horse":
+        ell(lighten(face, 12), cx, cy + r * 0.28, r * 0.40, r * 0.28)
+        for sign in (-1, 1):
+            pygame.draw.circle(
+                surface,
+                outline,
+                (cx + sign * int(r * 0.12), cy + int(r * 0.32)),
+                max(1, int(r * 0.05)),
+            )
+    elif kind == "rooster":
+        poly(
+            (255, 180, 60),
+            [
+                (cx - r * 0.16, cy + r * 0.18),
+                (cx + r * 0.16, cy + r * 0.18),
+                (cx, cy + r * 0.48),
+            ],
+        )
+    elif kind == "snake":
+        pygame.draw.line(
+            surface,
+            (255, 80, 100),
+            (cx, cy + int(r * 0.18)),
+            (cx, cy + int(r * 0.55)),
+            max(1, int(r * 0.05)),
+        )
+        pygame.draw.line(
+            surface,
+            (255, 80, 100),
+            (cx, cy + int(r * 0.55)),
+            (cx - int(r * 0.14), cy + int(r * 0.70)),
+            max(1, int(r * 0.04)),
+        )
+        pygame.draw.line(
+            surface,
+            (255, 80, 100),
+            (cx, cy + int(r * 0.55)),
+            (cx + int(r * 0.14), cy + int(r * 0.70)),
+            max(1, int(r * 0.04)),
+        )
+    elif kind == "croc":
+        ell(face, cx, cy + r * 0.30, r * 0.55, r * 0.28)
+        for sign in (-1, 1):
+            poly(
+                (250, 250, 240),
+                [
+                    (cx + sign * r * 0.10, cy + r * 0.40),
+                    (cx + sign * r * 0.22, cy + r * 0.40),
+                    (cx + sign * r * 0.16, cy + r * 0.52),
+                ],
+            )
+    elif kind == "bird":
+        poly(
+            (255, 180, 60),
+            [
+                (cx - r * 0.14, cy + r * 0.20),
+                (cx + r * 0.14, cy + r * 0.20),
+                (cx, cy + r * 0.46),
+            ],
+        )
+    if kind == "goat" and skin.get("group") == "喜羊羊":
+        bell_y = cy + int(r * 0.95)
+        pygame.draw.circle(
+            surface,
+            (255, 204, 64),
+            (cx, bell_y),
+            max(2, int(r * 0.10)),
+        )
+        pygame.draw.circle(
+            surface,
+            outline,
+            (cx, bell_y),
+            max(2, int(r * 0.10)),
+            1,
+        )
     if kind == "tiger":
         for offset in (-0.28, 0.0, 0.28):
             pygame.draw.line(
@@ -643,6 +1224,18 @@ def draw_avatar(surface, center, radius, skin):
                 (cx + int(sign * r * 0.46), cy - int(r * 0.80)),
                 max(1, int(r * 0.11)),
             )
+    elif kind == "ultra":
+        for sign in (-1, 1):
+            ex = cx + sign * int(r * 0.36)
+            ey = cy - int(r * 0.05)
+            ell((255, 245, 150), ex, ey, r * 0.22, r * 0.14)
+            pygame.draw.circle(surface, (255, 230, 80), (ex, ey), max(1, int(r * 0.08)))
+    elif kind == "robot":
+        for sign in (-1, 1):
+            ex = cx + sign * int(r * 0.30)
+            ey = cy - int(r * 0.04)
+            pygame.draw.circle(surface, (120, 240, 255), (ex, ey), max(2, int(r * 0.12)))
+            pygame.draw.circle(surface, (255, 255, 255), (ex, ey), max(1, int(r * 0.05)))
     elif kind == "anime":
         for sign in (-1, 1):
             ex = cx + sign * int(r * 0.38)
@@ -656,6 +1249,14 @@ def draw_avatar(surface, center, radius, skin):
                 (ex - int(r * 0.05), ey - int(r * 0.07)),
                 max(1, int(r * 0.04)),
             )
+            if r >= 18:
+                pygame.draw.line(
+                    surface,
+                    outline,
+                    (ex - int(r * 0.22), ey - int(r * 0.20)),
+                    (ex + int(r * 0.22), ey - int(r * 0.22)),
+                    max(1, int(r * 0.05)),
+                )
         for sign in (-1, 1):
             ell((255, 150, 170), cx + sign * r * 0.62, cy + r * 0.38, r * 0.14, r * 0.08)
         pygame.draw.arc(
@@ -667,19 +1268,60 @@ def draw_avatar(surface, center, radius, skin):
             1,
         )
     else:
-        eye_radius = max(1, int(r * 0.13))
+        eye_radius = max(1, int(r * 0.15))
         for sign in (-1, 1):
             ex = cx + sign * int(r * 0.34)
             ey = cy - int(r * 0.08)
+            if r >= 18:
+                pygame.draw.circle(
+                    surface,
+                    mix_color(face, outline, 0.18),
+                    (ex, ey),
+                    eye_radius + 3,
+                )
             pygame.draw.circle(surface, (250, 252, 250), (ex, ey), eye_radius + 1)
             pygame.draw.circle(surface, eye_color, (ex, ey), eye_radius)
+            if kind in ("cat", "tiger", "snake", "croc"):
+                pupil_w = max(1, int(eye_radius * 0.38))
+                pupil_h = max(2, int(eye_radius * 1.10))
+                pygame.draw.ellipse(
+                    surface,
+                    (18, 20, 26),
+                    pygame.Rect(
+                        ex - pupil_w,
+                        ey - pupil_h,
+                        pupil_w * 2,
+                        pupil_h * 2,
+                    ),
+                )
+            else:
+                pygame.draw.circle(
+                    surface,
+                    (18, 20, 26),
+                    (ex, ey),
+                    max(1, int(eye_radius * 0.55)),
+                )
             pygame.draw.circle(
                 surface,
                 (255, 255, 255),
-                (ex - 1, ey - 1),
+                (
+                    ex - max(1, eye_radius // 3),
+                    ey - max(1, eye_radius // 3),
+                ),
                 max(1, eye_radius // 3),
             )
 
+        if r >= 18 and kind not in ("snake", "croc"):
+            for sign in (-1, 1):
+                ex = cx + sign * int(r * 0.34)
+                ey = cy - int(r * 0.08)
+                pygame.draw.line(
+                    surface,
+                    outline,
+                    (ex - int(r * 0.12), ey - int(r * 0.22)),
+                    (ex + int(r * 0.12), ey - int(r * 0.24)),
+                    max(1, int(r * 0.05)),
+                )
     if kind in ("cat", "tiger"):
         for sign in (-1, 1):
             for delta in (-0.06, 0.10):
@@ -702,7 +1344,7 @@ def draw_avatar(surface, center, radius, skin):
             math.tau,
             2,
         )
-    elif kind != "anime":
+    elif kind not in ("anime", "ultra", "robot", "pig", "rooster", "bird", "snake", "croc"):
         ell(skin["belly"], cx, cy + r * 0.36, r * 0.46, r * 0.28)
         poly(
             outline,
@@ -721,9 +1363,218 @@ def draw_avatar(surface, center, radius, skin):
             1,
         )
 
-    if kind in ("rabbit", "anime"):
+    if kind in ("rabbit", "anime", "bear", "mouse", "goat", "pig"):
         for sign in (-1, 1):
             ell((255, 150, 170), cx + sign * r * 0.62, cy + r * 0.38, r * 0.14, r * 0.08)
+
+
+# Optional licensed PNG portraits. Live2D/Spine runtimes are not bundled.
+def load_portrait_image(skin):
+    image_module = getattr(pygame, "image", None)
+    if image_module is None or not PORTRAIT_DIR.exists():
+        return None
+    candidates = [
+        PORTRAIT_DIR / f"{skin.get('group', '经典')}_{skin['name']}.png",
+        PORTRAIT_DIR / f"{skin['name']}.png",
+    ]
+    for path in candidates:
+        if not path.exists():
+            continue
+        key = str(path)
+        if key not in PORTRAIT_CACHE:
+            try:
+                image = image_module.load(key).convert_alpha()
+            except (pygame.error, OSError):
+                image = None
+            PORTRAIT_CACHE[key] = image
+        if PORTRAIT_CACHE[key] is not None:
+            return PORTRAIT_CACHE[key], key
+    return None
+
+
+def scaled_portrait_image(image, key, size):
+    cache_key = (key, size)
+    if cache_key not in PORTRAIT_SCALED_CACHE:
+        try:
+            scaled = pygame.transform.smoothscale(image, size)
+        except (pygame.error, ValueError):
+            scaled = image
+        PORTRAIT_SCALED_CACHE[cache_key] = scaled
+    return PORTRAIT_SCALED_CACHE[cache_key]
+
+
+def draw_closed_eyes(surface, center, radius, skin):
+    cx = int(center[0])
+    cy = int(center[1])
+    r = max(6, int(radius))
+    kind = skin.get("avatar", "cat")
+    if kind == "frog":
+        x_offset, y_offset = 0.46, -0.80
+    elif kind == "ultra":
+        x_offset, y_offset = 0.36, -0.05
+    elif kind == "robot":
+        x_offset, y_offset = 0.30, -0.04
+    elif kind == "anime":
+        x_offset, y_offset = 0.38, 0.05
+    else:
+        x_offset, y_offset = 0.34, -0.08
+    color = skin["outline"]
+    width = max(1, int(r * 0.07))
+    for sign in (-1, 1):
+        ex = cx + sign * int(r * x_offset)
+        ey = cy + int(r * y_offset)
+        pygame.draw.line(
+            surface,
+            color,
+            (ex - int(r * 0.15), ey),
+            (ex + int(r * 0.15), ey),
+            width,
+        )
+        pygame.draw.line(
+            surface,
+            color,
+            (ex + sign * int(r * 0.14), ey),
+            (ex + sign * int(r * 0.20), ey + int(r * 0.03)),
+            max(1, int(r * 0.04)),
+        )
+
+def draw_avatar_portrait(surface, center, radius, skin, team=None, show_badge=True):
+    cx = int(center[0])
+    cy = int(center[1])
+    r = max(10, int(radius))
+    if team is not None:
+        ring = team_ui_color(team)
+        ring_light = team["highlight"]
+    else:
+        red, green, blue = skin["body"]
+        ring = skin["highlight"] if red + green + blue < 300 else skin["body"]
+        ring_light = skin["highlight"]
+
+    shadow = pygame.Rect(
+        cx - r - 8,
+        cy + r - 2,
+        (r + 8) * 2,
+        max(6, r // 3),
+    )
+    pygame.draw.ellipse(surface, (7, 14, 21), shadow)
+
+    for step in range(3):
+        radius = r + 10 - step * 2
+        pygame.draw.circle(
+            surface,
+            mix_color((14, 27, 39), ring, 0.10 + step * 0.08),
+            (cx, cy),
+            radius,
+        )
+    pygame.draw.circle(surface, ring, (cx, cy), r + 10, 3)
+    pygame.draw.circle(
+        surface,
+        mix_color(ring, (255, 255, 255), 0.35),
+        (cx, cy),
+        r + 7,
+        1,
+    )
+    pygame.draw.circle(surface, (25, 43, 57), (cx, cy), r + 4)
+    now = pygame.time.get_ticks() / 1000.0
+    phase = (sum(ord(character) for character in skin["name"]) % 360) * math.pi / 180.0
+    bob = math.sin(now * 1.7 + phase) * (r * 0.025)
+    sway = math.sin(now * 1.15 + phase) * (r * 0.035)
+    breath = 1.0 + math.sin(now * 1.45 + phase) * 0.012
+    head_r = max(10, int(r * breath))
+    head_cx = cx + int(sway)
+    head_cy = cy + int(bob)
+
+    asset = load_portrait_image(skin)
+    if asset is not None:
+        image, key = asset
+        image_width = max(1, image.get_width())
+        image_height = max(1, image.get_height())
+        fit = min(
+            (head_r * 2) / image_width,
+            (head_r * 2) / image_height,
+        )
+        size = (
+            max(1, int(image_width * fit)),
+            max(1, int(image_height * fit)),
+        )
+        scaled = scaled_portrait_image(image, key, size)
+        image_rect = scaled.get_rect(center=(head_cx, head_cy))
+        surface.blit(scaled, image_rect)
+    else:
+        draw_avatar(surface, (head_cx, head_cy), head_r, skin)
+        blink = ((now + phase * 0.37) % 4.2) < 0.13
+        if blink and r >= 18:
+            draw_closed_eyes(surface, (head_cx, head_cy), head_r, skin)
+
+    group = skin.get("group", "经典")
+    if group == "生肖":
+        collar_color = (255, 204, 64)
+    elif group == "熊出没":
+        collar_color = (96, 180, 110)
+    elif group == "喜羊羊":
+        collar_color = (
+            (220, 80, 80)
+            if skin.get("avatar") == "wolf"
+            else (130, 220, 150)
+        )
+    elif group == "猪猪侠":
+        collar_color = (230, 80, 70)
+    elif group == "奥特曼":
+        collar_color = (220, 70, 70)
+    else:
+        collar_color = skin.get("accent", (255, 255, 255))
+
+    collar_h = max(3, int(r * 0.10))
+    collar_rect = pygame.Rect(
+        cx - int(r * 0.58),
+        cy + r + 2,
+        int(r * 1.16),
+        collar_h,
+    )
+    pygame.draw.rect(
+        surface,
+        collar_color,
+        collar_rect,
+        border_radius=max(1, collar_h // 2),
+    )
+    pygame.draw.circle(
+        surface,
+        (18, 30, 40),
+        (cx, collar_rect.centery),
+        max(2, int(r * 0.06)),
+    )
+    pygame.draw.circle(
+        surface,
+        (255, 255, 255),
+        (cx, collar_rect.centery),
+        max(1, int(r * 0.04)),
+    )
+    shine = (math.sin(now * 2.1 + phase) + 1.0) * 0.5
+    shine_x = cx - int(r * 0.35) + int(shine * r * 0.70)
+    pygame.draw.circle(
+        surface,
+        (255, 255, 255),
+        (shine_x, collar_rect.centery),
+        max(1, int(r * 0.03)),
+    )
+    if show_badge:
+        badge_r = max(9, int(r * 0.34))
+        badge_x = cx + int(r * 0.72)
+        badge_y = cy + int(r * 0.72)
+        pygame.draw.circle(surface, (9, 18, 27), (badge_x, badge_y), badge_r + 2)
+        pygame.draw.circle(
+            surface,
+            ring_light,
+            (badge_x, badge_y),
+            badge_r + 2,
+            1,
+        )
+        pygame.draw.circle(surface, (18, 32, 45), (badge_x, badge_y), badge_r)
+        font = get_font(max(10, int(badge_r * 1.25)), bold=True)
+        label = skin["name"][0]
+        label_surface = font.render(label, True, (255, 255, 255))
+        label_rect = label_surface.get_rect(center=(badge_x, badge_y))
+        surface.blit(label_surface, label_rect)
 
 
 def build_menu_background():
@@ -827,8 +1678,17 @@ def draw_snake_art(center, skin, length=13, spacing=18, radius=12, amplitude=16)
 
 class SnakeGame:
     def __init__(self, skin, difficulty):
+        self.mode = "classic"
         self.skin = skin
         self.difficulty = difficulty
+        self.cols = GRID_COLS
+        self.rows = GRID_ROWS
+        self.cell_w = CELL_WIDTH
+        self.cell_h = CELL_HEIGHT
+        self.world_w = self.cols * self.cell_w
+        self.world_h = self.rows * self.cell_h
+        self.food_target = FOOD_TARGET
+        self.food_cap = self.food_target + 8
         self.score = 0
         self.food_eaten = 0
         self.small_deaths = 0
@@ -842,22 +1702,24 @@ class SnakeGame:
         self.notice_duration = 0
         self.notice_color = ACCENT
         self.paused = False
+        self.pause_resume_rect = None
+        self.pause_exit_rect = None
         self.prev_bodies = {}
         self.render_t = 1.0
 
-        start_row = GRID_ROWS // 2
-        start_col = GRID_COLS // 2
+        start_row = self.rows // 2
+        start_col = self.cols // 2
         body = [Point(col=start_col + index, row=start_row) for index in range(5)]
         self.player = Snake(body, "left", skin, PLAYER_START_THICKNESS, True)
         self.next_direction = "left"
         self.last_move = pygame.time.get_ticks()
         head = self.player.head
-        self.cam_x = (head.col + 0.5) * CELL_WIDTH
-        self.cam_y = (head.row + 0.5) * CELL_HEIGHT
+        self.cam_x = (head.col + 0.5) * self.cell_w
+        self.cam_y = (head.row + 0.5) * self.cell_h
 
         for _ in range(difficulty["small_snakes"]):
             self.spawn_small_snake(initial=True)
-        self.spawn_food(FOOD_TARGET)
+        self.spawn_food(self.food_target)
         self.show_notice(
             "右上圆盘控制方向 · 撞到方形边界墙会死",
             ACCENT,
@@ -909,7 +1771,7 @@ class SnakeGame:
         return True
 
     def spawn_food(self, amount=1, near=None, min_radius=6.0, max_radius=12.0):
-        if len(self.foods) >= FOOD_TARGET + 8:
+        if len(self.foods) >= self.food_target + 8:
             return
         for _ in range(amount):
             for _attempt in range(500):
@@ -919,9 +1781,9 @@ class SnakeGame:
                     col = int(round(near.col + math.cos(angle) * radius))
                     row = int(round(near.row + math.sin(angle) * radius))
                 else:
-                    col = random.randrange(GRID_COLS)
-                    row = random.randrange(GRID_ROWS)
-                if not (0 <= col < GRID_COLS and 0 <= row < GRID_ROWS):
+                    col = random.randrange(self.cols)
+                    row = random.randrange(self.rows)
+                if not (0 <= col < self.cols and 0 <= row < self.rows):
                     continue
                 if not self.cell_is_free(col, row):
                     continue
@@ -931,19 +1793,19 @@ class SnakeGame:
                 break
 
     def spawn_small_snake(self, initial=False, thickness=SMALL_START_THICKNESS):
-        palettes = [skin for skin in SKINS if skin is not self.skin] or SKINS
+        palettes = [skin for skin in ALL_SKINS if skin is not self.skin] or ALL_SKINS
         for _attempt in range(400):
             direction = random.choice(list(DIRECTION_STEPS))
             step_col, step_row = DIRECTION_STEPS[direction]
-            head_col = random.randrange(GRID_COLS)
-            head_row = random.randrange(GRID_ROWS)
+            head_col = random.randrange(self.cols)
+            head_row = random.randrange(self.rows)
             body = []
             valid = True
             length = random.randint(4, 6)
             for index in range(length):
                 col = head_col - step_col * index
                 row = head_row - step_row * index
-                if not (0 <= col < GRID_COLS and 0 <= row < GRID_ROWS):
+                if not (0 <= col < self.cols and 0 <= row < self.rows):
                     valid = False
                     break
                 if not self.cell_is_free(col, row):
@@ -978,6 +1840,8 @@ class SnakeGame:
         danger = set()
         heads = []
         for other in self.all_snakes():
+            if other is snake or same_team(snake, other):
+                continue
             for part in other.body:
                 danger.add((part.row, part.col))
             heads.append(other.head)
@@ -989,19 +1853,24 @@ class SnakeGame:
             col = head.col + step_col
             row = head.row + step_row
             score = random.random() * 0.35
-            if not (0 <= col < GRID_COLS and 0 <= row < GRID_ROWS):
+            if not (0 <= col < self.cols and 0 <= row < self.rows):
                 score += 1000
                 options.append((score, direction))
                 continue
             if (row, col) in danger:
                 score += 80
+            if step_col and step_row:
+                side_a = (head.row, head.col + step_col)
+                side_b = (head.row + step_row, head.col)
+                if side_a in danger or side_b in danger:
+                    score += 80
             if target is not None:
                 score += grid_distance(Point(col, row), target)
             for other_head in heads:
                 if other_head is head:
                     continue
                 if grid_distance(Point(col, row), other_head) <= 1:
-                    score += 7
+                    score += 45
             if direction == snake.direction:
                 score -= 0.4
             options.append((score, direction))
@@ -1051,8 +1920,8 @@ class SnakeGame:
             )
             new_heads[snake] = new_head
             in_bounds = (
-                0 <= new_head.col < GRID_COLS
-                and 0 <= new_head.row < GRID_ROWS
+                0 <= new_head.col < self.cols
+                and 0 <= new_head.row < self.rows
             )
             eating[snake] = in_bounds and any(
                 food.col == new_head.col and food.row == new_head.row
@@ -1071,8 +1940,8 @@ class SnakeGame:
         for snake in snakes:
             new_head = new_heads[snake]
             if not (
-                0 <= new_head.col < GRID_COLS
-                and 0 <= new_head.row < GRID_ROWS
+                0 <= new_head.col < self.cols
+                and 0 <= new_head.row < self.rows
             ):
                 deaths[snake] = "撞到了边界墙！"
                 continue
@@ -1086,8 +1955,6 @@ class SnakeGame:
                     else:
                         deaths[snake] = "撞到了小蛇的身体！"
                     break
-            if snake not in deaths and cell in after_cells[snake]:
-                deaths[snake] = "撞到了自己的身体！"
 
         target_cells = {}
         for snake in snakes:
@@ -1127,12 +1994,12 @@ class SnakeGame:
         for index, part in enumerate(snake.body):
             if index % 2:
                 continue
-            if len(self.foods) >= FOOD_TARGET + 12:
+            if len(self.foods) >= self.food_target + 12:
                 break
             if self.cell_is_free(part.col, part.row):
                 self.foods.append(part.copy())
         self.respawn_at.append(now + self.difficulty["respawn"])
-        if len(self.foods) > FOOD_TARGET + 2:
+        if len(self.foods) > self.food_target + 2:
             self.show_notice("一条小蛇倒下，身体变成了食物", (255, 156, 120), 1700)
 
     def consume_food(self, snake, cell):
@@ -1213,8 +2080,8 @@ class SnakeGame:
     def head_world(self):
         head = self.player.head
         return (
-            (head.col + 0.5) * CELL_WIDTH,
-            (head.row + 0.5) * CELL_HEIGHT,
+            (head.col + 0.5) * self.cell_w,
+            (head.row + 0.5) * self.cell_h,
         )
 
     def interpolated_head_world(self, t):
@@ -1228,8 +2095,8 @@ class SnakeGame:
             col = head.col
             row = head.row
         return (
-            (col + 0.5) * CELL_WIDTH,
-            (row + 0.5) * CELL_HEIGHT,
+            (col + 0.5) * self.cell_w,
+            (row + 0.5) * self.cell_h,
         )
 
     def body_centers(self, snake, t):
@@ -1244,8 +2111,8 @@ class SnakeGame:
             row = old.row + (part.row - old.row) * t
             centers.append(
                 self.to_screen(
-                    (col + 0.5) * CELL_WIDTH,
-                    (row + 0.5) * CELL_HEIGHT,
+                    (col + 0.5) * self.cell_w,
+                    (row + 0.5) * self.cell_h,
                 )
             )
         return centers
@@ -1258,8 +2125,8 @@ class SnakeGame:
 
     def cell_screen(self, part):
         return self.to_screen(
-            (part.col + 0.5) * CELL_WIDTH,
-            (part.row + 0.5) * CELL_HEIGHT,
+            (part.col + 0.5) * self.cell_w,
+            (part.row + 0.5) * self.cell_h,
         )
 
     def draw_line(self, color, start, end, width):
@@ -1340,6 +2207,15 @@ class SnakeGame:
 
         self.draw_head(snake, centers[0], thickness)
 
+        if snake.is_player:
+            font = get_font(13, bold=True)
+            label_surface = font.render(snake.name, True, (255, 255, 255))
+            shadow_surface = font.render(snake.name, True, (8, 16, 22))
+            label_x = centers[0][0] - label_surface.get_width() // 2
+            label_y = centers[0][1] - thickness - 16
+            SCREEN.blit(shadow_surface, (label_x + 1, label_y + 1))
+            SCREEN.blit(label_surface, (label_x, label_y))
+
     def draw_grid(self, world_rect):
         left = max(0, world_rect.left)
         right = min(WIDTH, world_rect.right)
@@ -1347,8 +2223,8 @@ class SnakeGame:
         bottom = min(HEIGHT, world_rect.bottom)
         if left >= right or top >= bottom:
             return
-        for col in range(0, GRID_COLS, 4):
-            screen_x = world_rect.left + int(col * CELL_WIDTH)
+        for col in range(0, self.cols, 4):
+            screen_x = world_rect.left + int(col * self.cell_w)
             if left <= screen_x <= right:
                 pygame.draw.line(
                     SCREEN,
@@ -1357,8 +2233,8 @@ class SnakeGame:
                     (screen_x, bottom),
                     1,
                 )
-        for row in range(0, GRID_ROWS, 4):
-            screen_y = world_rect.top + int(row * CELL_HEIGHT)
+        for row in range(0, self.rows, 4):
+            screen_y = world_rect.top + int(row * self.cell_h)
             if top <= screen_y <= bottom:
                 pygame.draw.line(
                     SCREEN,
@@ -1476,8 +2352,8 @@ class SnakeGame:
 
         for snake in self.small_snakes:
             head = snake.head
-            dot_x = rect.x + (head.col + 0.5) / GRID_COLS * rect.w
-            dot_y = rect.y + (head.row + 0.5) / GRID_ROWS * rect.h
+            dot_x = rect.x + (head.col + 0.5) / self.cols * rect.w
+            dot_y = rect.y + (head.row + 0.5) / self.rows * rect.h
             pygame.draw.circle(
                 SCREEN,
                 (238, 78, 78),
@@ -1486,15 +2362,15 @@ class SnakeGame:
             )
 
         head = self.player.head
-        dot_x = rect.x + (head.col + 0.5) / GRID_COLS * rect.w
-        dot_y = rect.y + (head.row + 0.5) / GRID_ROWS * rect.h
+        dot_x = rect.x + (head.col + 0.5) / self.cols * rect.w
+        dot_y = rect.y + (head.row + 0.5) / self.rows * rect.h
         pygame.draw.circle(SCREEN, (250, 255, 250), (int(dot_x), int(dot_y)), 5)
         pygame.draw.circle(SCREEN, (56, 232, 118), (int(dot_x), int(dot_y)), 3)
 
         leader = self.leader_snake()
         leader_head = leader.head
-        leader_x = rect.x + (leader_head.col + 0.5) / GRID_COLS * rect.w
-        leader_y = rect.y + (leader_head.row + 0.5) / GRID_ROWS * rect.h
+        leader_x = rect.x + (leader_head.col + 0.5) / self.cols * rect.w
+        leader_y = rect.y + (leader_head.row + 0.5) / self.rows * rect.h
         pygame.draw.circle(
             SCREEN,
             (255, 204, 64),
@@ -1544,8 +2420,8 @@ class SnakeGame:
         world_rect = pygame.Rect(
             int(VIEW_CENTER_X - self.cam_x),
             int(VIEW_CENTER_Y - self.cam_y),
-            int(WORLD_WIDTH),
-            int(WORLD_HEIGHT),
+            int(self.world_w),
+            int(self.world_h),
         )
         pygame.draw.rect(SCREEN, BOARD_COLOR, world_rect)
         self.draw_grid(world_rect)
@@ -1609,30 +2485,50 @@ class SnakeGame:
 
     def draw_paused_overlay(self):
         overlay = pygame.Surface((WIDTH, BOARD_HEIGHT), pygame.SRCALPHA)
-        overlay.fill((8, 18, 27, 112))
+        overlay.fill((8, 18, 27, 150))
         SCREEN.blit(overlay, (0, BOARD_TOP))
 
         panel = pygame.Rect(
-            WIDTH // 2 - 230,
-            BOARD_TOP + BOARD_HEIGHT // 2 - 76,
-            460,
-            152,
+            WIDTH // 2 - 270,
+            BOARD_TOP + BOARD_HEIGHT // 2 - 120,
+            540,
+            240,
         )
-        pygame.draw.rect(SCREEN, (20, 36, 50), panel, border_radius=20)
-        pygame.draw.rect(SCREEN, (87, 194, 164), panel, 2, border_radius=20)
+        pygame.draw.rect(SCREEN, (20, 36, 50), panel, border_radius=22)
+        pygame.draw.rect(SCREEN, (87, 194, 164), panel, 2, border_radius=22)
         draw_text(
             "游戏已暂停",
-            34,
+            36,
             TEXT_COLOR,
-            (WIDTH // 2, panel.y + 52),
+            (panel.centerx, panel.y + 50),
             bold=True,
         )
         draw_text(
-            "点击右上角「继续游戏」或按空格继续",
-            18,
+            "按 P / 空格继续，ESC 退出本局",
+            17,
             MUTED_TEXT,
-            (WIDTH // 2, panel.y + 104),
+            (panel.centerx, panel.y + 92),
         )
+
+        resume_rect = pygame.Rect(panel.centerx - 220, panel.y + 124, 200, 56)
+        exit_rect = pygame.Rect(panel.centerx + 20, panel.y + 124, 200, 56)
+        mouse_pos = pygame.mouse.get_pos()
+        draw_button(
+            resume_rect,
+            "继续游戏",
+            mouse_pos,
+            color=ACCENT,
+            text_color=(10, 33, 26),
+        )
+        draw_button(
+            exit_rect,
+            "退出比赛" if self.mode == "team" else "退出游戏",
+            mouse_pos,
+            color=(198, 82, 82),
+            text_color=(255, 246, 246),
+        )
+        self.pause_resume_rect = resume_rect
+        self.pause_exit_rect = exit_rect
 
     def draw_hud(self):
         pygame.draw.rect(SCREEN, (18, 31, 42), (0, 0, WIDTH, HUD_HEIGHT))
@@ -1696,6 +2592,727 @@ class SnakeGame:
             enabled=self.paused,
             color=ACCENT,
         )
+
+
+class TeamGame(SnakeGame):
+    def __init__(self, player_team_index, player_skin_index):
+        self.mode = "team"
+        self.player_team_index = player_team_index
+        self.team = TEAMS[player_team_index]
+        self.skin = self.team["skins"][player_skin_index]
+        self.player_skin = self.skin
+        self.difficulty = dict(DIFFICULTIES[1])
+        self.difficulty["interval"] = TEAM_INTERVAL_MS
+        self.cols = TEAM_COLS
+        self.rows = TEAM_ROWS
+        self.cell_w = 16.0
+        self.cell_h = 16.0
+        self.world_w = self.cols * self.cell_w
+        self.world_h = self.rows * self.cell_h
+        self.food_target = TEAM_FOOD_TARGET
+        self.food_cap = TEAM_FOOD_TARGET + 30
+        self.score = 0
+        self.food_eaten = 0
+        self.small_deaths = 0
+        self.dead_reason = ""
+        self.notice_message = ""
+        self.notice_started_at = 0
+        self.notice_duration = 0
+        self.notice_color = ACCENT
+        self.paused = False
+        self.pause_resume_rect = None
+        self.pause_exit_rect = None
+        self.prev_bodies = {}
+        self.render_t = 1.0
+        self.snakes = []
+        self.player = None
+        self.next_direction = "left"
+        self.last_move = pygame.time.get_ticks()
+        self.foods = []
+        self.respawn_queue = []
+        self.team_scores = [0 for _ in TEAMS]
+        self.member_scores = {}
+        self.team_kills = [0 for _ in TEAMS]
+        self.match_started_at = pygame.time.get_ticks()
+        self.match_end_at = self.match_started_at + TEAM_MATCH_MS
+        self.paused_remaining = TEAM_MATCH_MS
+        self.match_over = False
+        self.results = None
+        self.camera_world = (
+            self.cols * self.cell_w / 2,
+            self.rows * self.cell_h / 2,
+        )
+        self.cam_x, self.cam_y = self.camera_world
+        self._spawn_all_teams()
+        self.spawn_food(self.food_target)
+        self.show_notice(
+            "5 队团队赛开始 · 5 分钟积分赛 · 撞到别的蛇会死",
+            team_ui_color(self.team),
+            3600,
+        )
+
+    @property
+    def snake(self):
+        return self.player.body if self.player is not None else []
+
+    @property
+    def head(self):
+        return self.player.head if self.player is not None else None
+
+    @property
+    def direction(self):
+        return self.player.direction if self.player is not None else self.next_direction
+
+    def all_snakes(self):
+        return [snake for snake in self.snakes if snake.alive]
+
+    def team_rank(self):
+        order = sorted(
+            range(len(TEAMS)),
+            key=lambda index: (-self.team_scores[index], index),
+        )
+        return order.index(self.player_team_index) + 1
+
+    def time_left_ms(self):
+        if self.match_over:
+            return 0
+        if self.paused:
+            return max(0, self.paused_remaining)
+        return max(0, self.match_end_at - pygame.time.get_ticks())
+
+    def set_paused(self, paused):
+        if self.match_over or self.paused == paused:
+            return
+        now = pygame.time.get_ticks()
+        if paused:
+            self.paused_remaining = max(0, self.match_end_at - now)
+            self.paused = True
+        else:
+            self.paused = False
+            self.match_end_at = now + self.paused_remaining
+            self.last_move = now
+
+    def add_score(self, snake, points):
+        snake.score += points
+        self.team_scores[snake.team_id] += points
+        key = (snake.team_id, snake.name)
+        self.member_scores[key] = self.member_scores.get(key, 0) + points
+
+    def _team_member_skins(self, team_index):
+        skins = list(TEAMS[team_index]["skins"])
+        if team_index == self.player_team_index:
+            chosen = self.skin
+            others = [skin for skin in skins if skin is not chosen]
+            random.shuffle(others)
+            return [chosen] + others[:TEAM_MEMBERS - 1]
+        random.shuffle(skins)
+        return skins[:TEAM_MEMBERS]
+
+    def _spawn_all_teams(self):
+        for team_index in range(len(TEAMS)):
+            for skin in self._team_member_skins(team_index):
+                is_player = (
+                    team_index == self.player_team_index
+                    and skin is self.skin
+                )
+                self.spawn_team_snake(team_index, skin, is_player=is_player)
+
+    def spawn_team_snake(self, team_index, skin, is_player=False, name=None):
+        team = TEAMS[team_index]
+        display_skin = team_skin(skin, team)
+        display_name = name or skin["name"]
+        for _attempt in range(900):
+            direction = random.choice(list(DIRECTION_STEPS))
+            step_col, step_row = DIRECTION_STEPS[direction]
+            head_col = random.randrange(2, self.cols - 2)
+            head_row = random.randrange(2, self.rows - 2)
+            body = []
+            valid = True
+            for index in range(5):
+                col = head_col - step_col * index
+                row = head_row - step_row * index
+                if not (0 <= col < self.cols and 0 <= row < self.rows):
+                    valid = False
+                    break
+                if not self.cell_is_free(col, row):
+                    valid = False
+                    break
+                body.append(Point(col=col, row=row))
+            if not valid:
+                continue
+            too_close = False
+            for other in self.all_snakes():
+                if grid_distance(body[0], other.head) < 7:
+                    too_close = True
+                    break
+            if too_close:
+                continue
+            snake = Snake(
+                body,
+                direction,
+                display_skin,
+                7.5,
+                is_player,
+                team_id=team_index,
+                name=display_name,
+            )
+            snake.base_skin = skin
+            self.snakes.append(snake)
+            self.member_scores.setdefault((team_index, display_name), 0)
+            if is_player:
+                self.player = snake
+                self.next_direction = direction
+                self.cam_x = (snake.head.col + 0.5) * self.cell_w
+                self.cam_y = (snake.head.row + 0.5) * self.cell_h
+                self.camera_world = (self.cam_x, self.cam_y)
+            return snake
+
+        if is_player:
+            center_col = self.cols // 2
+            center_row = self.rows // 2
+            body = [
+                Point(col=center_col - index, row=center_row)
+                for index in range(5)
+            ]
+            snake = Snake(
+                body,
+                "right",
+                display_skin,
+                7.5,
+                True,
+                team_id=team_index,
+                name=display_name,
+            )
+            snake.base_skin = skin
+            self.snakes.append(snake)
+            self.member_scores.setdefault((team_index, display_name), 0)
+            self.player = snake
+            self.next_direction = "right"
+            self.cam_x = (snake.head.col + 0.5) * self.cell_w
+            self.cam_y = (snake.head.row + 0.5) * self.cell_h
+            self.camera_world = (self.cam_x, self.cam_y)
+            return snake
+        return None
+
+    def spawn_food(self, amount=1, near=None, min_radius=6.0, max_radius=12.0):
+        for _ in range(amount):
+            if len(self.foods) >= self.food_cap:
+                return
+            for _attempt in range(900):
+                if near is not None:
+                    angle = random.uniform(0.0, math.tau)
+                    radius = random.uniform(min_radius, max_radius)
+                    col = int(round(near.col + math.cos(angle) * radius))
+                    row = int(round(near.row + math.sin(angle) * radius))
+                else:
+                    col = random.randrange(self.cols)
+                    row = random.randrange(self.rows)
+                if not (0 <= col < self.cols and 0 <= row < self.rows):
+                    continue
+                if not self.cell_is_free(col, row):
+                    continue
+                if (
+                    self.player is not None
+                    and self.player.alive
+                    and grid_distance(Point(col, row), self.player.head) < 3
+                ):
+                    continue
+                self.foods.append(Point(col=col, row=row))
+                break
+
+    def consume_food(self, snake, cell):
+        for index, food in enumerate(self.foods):
+            if food.col == cell.col and food.row == cell.row:
+                del self.foods[index]
+                break
+        snake.eaten += 1
+        self.add_score(snake, TEAM_FOOD_SCORE)
+        snake.thickness = min(MAX_THICKNESS, snake.thickness + 0.45)
+        if snake.is_player:
+            play_sound(EAT_SOUND)
+        missing = self.food_target - len(self.foods)
+        if missing > 0:
+            self.spawn_food(min(3, missing))
+
+    def handle_team_death(self, snake, reason, now, killer=None):
+        if not snake.alive:
+            return
+        snake.alive = False
+        snake.death_reason = reason
+        if killer is not None and killer is not snake and killer.alive:
+            killer.kills += 1
+            self.team_kills[killer.team_id] += 1
+            self.add_score(killer, TEAM_KILL_SCORE)
+        for index, part in enumerate(snake.body):
+            if index % 2:
+                continue
+            if len(self.foods) >= self.food_cap:
+                break
+            if self.cell_is_free(part.col, part.row):
+                self.foods.append(part.copy())
+        self.respawn_queue.append(
+            (
+                now + TEAM_RESPAWN_MS,
+                snake.team_id,
+                snake.base_skin,
+                snake.is_player,
+                snake.name,
+            )
+        )
+        if snake.is_player:
+            self.dead_reason = reason
+            self.camera_world = (
+                (snake.head.col + 0.5) * self.cell_w,
+                (snake.head.row + 0.5) * self.cell_h,
+            )
+            self.show_notice(
+                f"你被击倒：{reason} · {TEAM_RESPAWN_MS // 1000} 秒后复活",
+                (255, 120, 120),
+                2400,
+            )
+            play_sound(SNAKE_DOWN_SOUND)
+        elif killer is not None and killer.is_player:
+            self.show_notice(
+                f"你击倒了 {snake.name}！",
+                (255, 220, 120),
+                1600,
+            )
+            play_sound(SNAKE_DOWN_SOUND)
+
+    def update(self):
+        if self.match_over:
+            return ""
+        now = pygame.time.get_ticks()
+        while self.respawn_queue and now >= self.respawn_queue[0][0]:
+            _, team_index, skin, is_player, name = self.respawn_queue.pop(0)
+            self.spawn_team_snake(
+                team_index,
+                skin,
+                is_player=is_player,
+                name=name,
+            )
+
+        if self.player is not None and self.player.alive:
+            self.player.direction = self.next_direction
+
+        snakes = self.all_snakes()
+        if not snakes:
+            return ""
+        self.prev_bodies = {
+            snake: [part.copy() for part in snake.body]
+            for snake in snakes
+        }
+
+        decisions = {}
+        for snake in snakes:
+            if snake.is_player:
+                decisions[snake] = self.next_direction
+            else:
+                decisions[snake] = self.choose_ai_direction(snake)
+
+        new_heads = {}
+        eating = {}
+        for snake in snakes:
+            direction = decisions[snake]
+            snake.direction = direction
+            step_col, step_row = DIRECTION_STEPS[direction]
+            head = snake.head
+            new_head = Point(
+                col=head.col + step_col,
+                row=head.row + step_row,
+            )
+            new_heads[snake] = new_head
+            in_bounds = (
+                0 <= new_head.col < self.cols
+                and 0 <= new_head.row < self.rows
+            )
+            eating[snake] = in_bounds and any(
+                food.col == new_head.col and food.row == new_head.row
+                for food in self.foods
+            )
+
+        after_cells = {}
+        for snake in snakes:
+            after_cells[snake] = {
+                (part.row, part.col) for part in snake.body
+            }
+
+        body_owner = {}
+        for snake in snakes:
+            for part in snake.body:
+                body_owner.setdefault((part.row, part.col), []).append(snake)
+        deaths = {}
+        for snake in snakes:
+            new_head = new_heads[snake]
+            if not (
+                0 <= new_head.col < self.cols
+                and 0 <= new_head.row < self.rows
+            ):
+                deaths[snake] = ("撞到了边界墙！", None)
+                continue
+            direction = decisions[snake]
+            step_col, step_row = DIRECTION_STEPS[direction]
+            if step_col and step_row:
+                old_head = snake.head
+                side_cells = (
+                    (old_head.row, old_head.col + step_col),
+                    (old_head.row + step_row, old_head.col),
+                )
+                for side_cell in side_cells:
+                    for other in body_owner.get(side_cell, ()):
+                        if other is not snake and not same_team(snake, other):
+                            deaths[snake] = ("斜穿过了敌方蛇的身体！", other)
+                            break
+                    if snake in deaths:
+                        break
+                if snake in deaths:
+                    continue
+            cell = (new_head.row, new_head.col)
+            for other in snakes:
+                if other is snake or same_team(snake, other):
+                    continue
+                if cell in after_cells[other]:
+                    deaths[snake] = ("撞到了其他蛇的身体！", other)
+                    break
+
+        target_cells = {}
+        for snake in snakes:
+            cell = (new_heads[snake].row, new_heads[snake].col)
+            target_cells.setdefault(cell, []).append(snake)
+        for group in target_cells.values():
+            if len(group) > 1:
+                for snake in group:
+                    has_enemy = any(
+                        other is not snake and not same_team(snake, other)
+                        for other in group
+                    )
+                    if has_enemy:
+                        deaths.setdefault(snake, ("和另一条蛇撞头了！", None))
+
+        for first_index, first in enumerate(snakes):
+            for second in snakes[first_index + 1:]:
+                if same_team(first, second):
+                    continue
+                if segments_cross(
+                    first.head,
+                    new_heads[first],
+                    second.head,
+                    new_heads[second],
+                ):
+                    deaths.setdefault(first, ("和敌方蛇交叉穿过！", second))
+                    deaths.setdefault(second, ("和敌方蛇交叉穿过！", first))
+
+        for snake in snakes:
+            if snake in deaths:
+                continue
+            snake.body.insert(0, new_heads[snake])
+            if not eating[snake]:
+                snake.body.pop()
+
+        body_cells = {}
+        for snake in snakes:
+            if snake in deaths:
+                continue
+            for part in snake.body:
+                body_cells.setdefault((part.row, part.col), []).append(snake)
+        for occupants in body_cells.values():
+            if len(occupants) < 2:
+                continue
+            if len({snake.team_id for snake in occupants}) < 2:
+                continue
+            for snake in occupants:
+                if any(other.team_id != snake.team_id for other in occupants):
+                    deaths.setdefault(
+                        snake,
+                        ("和敌方蛇身体重叠了！", None),
+                    )
+
+        for snake in snakes:
+            if snake in deaths:
+                reason, killer = deaths[snake]
+                self.handle_team_death(snake, reason, now, killer)
+            elif eating[snake]:
+                self.consume_food(snake, new_heads[snake])
+        return ""
+
+    def finish_match(self):
+        if self.match_over:
+            return
+        self.match_over = True
+        self.paused = False
+        totals = list(self.team_scores)
+        team_top = []
+        for team_index in range(len(TEAMS)):
+            members = [
+                (name, score)
+                for (member_team, name), score in self.member_scores.items()
+                if member_team == team_index
+            ]
+            members.sort(key=lambda item: (-item[1], item[0]))
+            team_top.append(members[:3])
+        best_total = max(totals) if totals else 0
+        tied = [index for index, total in enumerate(totals) if total == best_total]
+        winner = max(
+            range(len(TEAMS)),
+            key=lambda index: (
+                totals[index],
+                team_top[index][0][1] if team_top[index] else 0,
+            ),
+        )
+        winner_members = [
+            (name, score)
+            for (member_team, name), score in self.member_scores.items()
+            if member_team == winner
+        ]
+        winner_members.sort(key=lambda item: (-item[1], item[0]))
+        self.results = {
+            "winner": winner,
+            "tied": tied,
+            "totals": totals,
+            "team_top": team_top,
+            "winner_top5": winner_members[:5],
+            "team_kills": list(self.team_kills),
+        }
+
+    def head_world(self):
+        if self.player is not None and self.player.alive:
+            head = self.player.head
+            return (
+                (head.col + 0.5) * self.cell_w,
+                (head.row + 0.5) * self.cell_h,
+            )
+        return self.camera_world
+
+    def interpolated_head_world(self, t):
+        if self.player is None or not self.player.alive:
+            return self.camera_world
+        head = self.player.head
+        previous = self.prev_bodies.get(self.player)
+        if previous:
+            old = previous[0]
+            col = old.col + (head.col - old.col) * t
+            row = old.row + (head.row - old.row) * t
+        else:
+            col = head.col
+            row = head.row
+        return (
+            (col + 0.5) * self.cell_w,
+            (row + 0.5) * self.cell_h,
+        )
+
+    def draw_radar(self):
+        rect = RADAR_RECT
+        panel = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
+        panel.fill((8, 20, 28, 200))
+        pygame.draw.rect(panel, (92, 170, 192, 235), panel.get_rect(), 2)
+        for step in range(1, 4):
+            x = rect.w * step // 4
+            y = rect.h * step // 4
+            pygame.draw.line(panel, (64, 104, 124, 90), (x, 0), (x, rect.h), 1)
+            pygame.draw.line(panel, (64, 104, 124, 90), (0, y), (rect.w, y), 1)
+        SCREEN.blit(panel, rect.topleft)
+
+        for snake in self.all_snakes():
+            head = snake.head
+            dot_x = rect.x + (head.col + 0.5) / self.cols * rect.w
+            dot_y = rect.y + (head.row + 0.5) / self.rows * rect.h
+            color = TEAMS[snake.team_id]["body"]
+            pygame.draw.circle(SCREEN, (220, 230, 240), (int(dot_x), int(dot_y)), 4, 1)
+            pygame.draw.circle(SCREEN, color, (int(dot_x), int(dot_y)), 3)
+            if snake.is_player:
+                pygame.draw.circle(
+                    SCREEN,
+                    (255, 255, 255),
+                    (int(dot_x), int(dot_y)),
+                    6,
+                    1,
+                )
+
+        leaders = self.all_snakes()
+        if leaders:
+            leader = max(
+                leaders,
+                key=lambda snake: (self.member_scores.get((snake.team_id, snake.name), 0), snake.thickness, len(snake.body)),
+            )
+            leader_head = leader.head
+            leader_x = rect.x + (leader_head.col + 0.5) / self.cols * rect.w
+            leader_y = rect.y + (leader_head.row + 0.5) / self.rows * rect.h
+            crown_y = (
+                leader_y - 11
+                if leader_y - 11 > rect.y + 6
+                else leader_y + 11
+            )
+            self.draw_crown(leader_x, crown_y)
+
+    def draw_team_timer(self):
+        rect = pygame.Rect(WIDTH // 2 - 48, BOARD_TOP + 10, 96, 96)
+        panel = pygame.Surface((rect.w, rect.h), pygame.SRCALPHA)
+        panel.fill((8, 18, 28, 212))
+        pygame.draw.rect(
+            panel,
+            team_ui_color(self.team),
+            panel.get_rect(),
+            3,
+            border_radius=16,
+        )
+        SCREEN.blit(panel, rect.topleft)
+        remaining = self.time_left_ms()
+        total_seconds = max(0, (remaining + 999) // 1000)
+        minutes = total_seconds // 60
+        seconds = total_seconds % 60
+        draw_text("剩余", 13, MUTED_TEXT, (rect.centerx, rect.y + 17))
+        time_color = (255, 120, 120) if remaining <= 30000 else TEXT_COLOR
+        draw_text(
+            f"{minutes:02d}:{seconds:02d}",
+            30,
+            time_color,
+            (rect.centerx, rect.y + 48),
+            bold=True,
+        )
+        draw_text(
+            self.team["short"],
+            13,
+            team_ui_color(self.team),
+            (rect.centerx, rect.y + 77),
+            bold=True,
+        )
+
+    def draw_team_hud(self):
+        pygame.draw.rect(SCREEN, (18, 31, 42), (0, 0, WIDTH, HUD_HEIGHT))
+        pygame.draw.line(
+            SCREEN,
+            (104, 133, 147),
+            (0, HUD_HEIGHT - 1),
+            (WIDTH, HUD_HEIGHT - 1),
+            2,
+        )
+        player_name = self.player.name if self.player is not None else self.skin["name"]
+        player_score = self.member_scores.get(
+            (self.player_team_index, player_name),
+            0,
+        )
+        draw_left_text(
+            f"{self.team['name']} · {player_name}",
+            21,
+            TEXT_COLOR,
+            (18, 7),
+            bold=True,
+        )
+        draw_left_text(
+            f"个人 {player_score} 分  ·  队伍 {self.team_scores[self.player_team_index]} 分  ·  第 {self.team_rank()} 名",
+            17,
+            team_ui_color(self.team),
+            (18, 35),
+            bold=True,
+        )
+        draw_text(
+            "5 队团队赛 · 5 分钟",
+            17,
+            MUTED_TEXT,
+            (WIDTH // 2, 18),
+            bold=True,
+        )
+        if self.player is None or not self.player.alive:
+            draw_text(
+                "复活中",
+                14,
+                (255, 170, 120),
+                (WIDTH // 2, 42),
+                bold=True,
+            )
+        mouse_pos = pygame.mouse.get_pos()
+        draw_hud_button(
+            PAUSE_BUTTON_RECT,
+            "暂停游戏",
+            mouse_pos,
+            enabled=not self.paused,
+            color=(227, 166, 58),
+        )
+        draw_hud_button(
+            RESUME_BUTTON_RECT,
+            "继续游戏",
+            mouse_pos,
+            enabled=self.paused,
+            color=ACCENT,
+        )
+
+    def draw_team_score_strip(self):
+        bar = pygame.Surface((WIDTH, 36), pygame.SRCALPHA)
+        bar.fill((8, 18, 28, 188))
+        SCREEN.blit(bar, (0, HEIGHT - 36))
+        total_width = 5 * 178
+        start_x = (WIDTH - total_width) // 2 + 12
+        y = HEIGHT - 18
+        for index, team in enumerate(TEAMS):
+            x = start_x + index * 178
+            pygame.draw.circle(SCREEN, (220, 230, 240), (x, y), 8, 1)
+            pygame.draw.circle(SCREEN, team["body"], (x, y), 6)
+            draw_left_text(
+                f"{team['short']} {self.team_scores[index]}",
+                15,
+                TEXT_COLOR,
+                (x + 12, y - 10),
+                bold=(index == self.player_team_index),
+            )
+
+    def draw_respawn_overlay(self):
+        remaining = None
+        for item in self.respawn_queue:
+            if item[3]:
+                remaining = max(0, item[0] - pygame.time.get_ticks())
+                break
+        if remaining is None:
+            text = "等待复活..."
+        else:
+            text = f"复活倒计时 {remaining / 1000:.1f}s"
+        draw_text(
+            text,
+            26,
+            (255, 190, 130),
+            (WIDTH // 2, BOARD_TOP + 128),
+            bold=True,
+        )
+
+    def draw(self):
+        interval = max(1, self.difficulty["interval"])
+        elapsed = pygame.time.get_ticks() - self.last_move
+        self.render_t = (
+            1.0
+            if self.paused
+            else max(0.0, min(1.0, elapsed / interval))
+        )
+        cam_x, cam_y = self.interpolated_head_world(self.render_t)
+        if self.player is not None and self.player.alive:
+            self.camera_world = (cam_x, cam_y)
+        self.cam_x, self.cam_y = cam_x, cam_y
+
+        SCREEN.fill((8, 14, 22))
+        world_rect = pygame.Rect(
+            int(VIEW_CENTER_X - self.cam_x),
+            int(VIEW_CENTER_Y - self.cam_y),
+            int(self.world_w),
+            int(self.world_h),
+        )
+        pygame.draw.rect(SCREEN, BOARD_COLOR, world_rect)
+        self.draw_grid(world_rect)
+        self.draw_joystick()
+        self.draw_food()
+        for snake in self.all_snakes():
+            if not snake.is_player:
+                self.draw_snake(snake)
+        if self.player is not None and self.player.alive:
+            self.draw_snake(self.player)
+        pygame.draw.rect(SCREEN, (56, 72, 86), world_rect, 4)
+        pygame.draw.rect(SCREEN, (120, 150, 165), world_rect.inflate(-8, -8), 1)
+        self.draw_radar()
+        self.draw_team_timer()
+        self.draw_notice()
+        if self.paused:
+            self.draw_paused_overlay()
+        self.draw_team_hud()
+        self.draw_team_score_strip()
+        if self.player is None or not self.player.alive:
+            self.draw_respawn_overlay()
 
 
 def load_scores():
@@ -1762,31 +3379,47 @@ def record_score(game):
 
 def draw_home(selected_skin, selected_difficulty, scores, mouse_pos):
     draw_menu_background()
-    draw_text("贪 吃 蛇", 66, TEXT_COLOR, (WIDTH // 2, 70), bold=True)
+    draw_text("贪 吃 蛇", 66, TEXT_COLOR, (WIDTH // 2, 64), bold=True)
     draw_text(
-        "方形边界墙 · 随机食物 · 清空周围引来小蛇",
-        21,
+        "经典蛇群争食 · 5 队团队赛 · 12 生肖 / 动画角色皮肤",
+        20,
         MUTED_TEXT,
-        (WIDTH // 2, 118),
+        (WIDTH // 2, 112),
     )
 
-    draw_snake_art(
-        (WIDTH // 2, 262),
+    draw_avatar_portrait(
+        SCREEN,
+        (WIDTH // 2, 235),
+        56,
         selected_skin,
-        length=14,
-        spacing=20,
-        radius=13,
-        amplitude=18,
     )
 
-    selected_label = f"当前皮肤：{selected_skin['name']}"
-    draw_text(selected_label, 21, MUTED_TEXT, (WIDTH // 2, 352))
+    draw_text(
+        f"当前皮肤：{selected_skin['name']}（{selected_skin.get('group', '经典')}）",
+        20,
+        MUTED_TEXT,
+        (WIDTH // 2, 340),
+    )
 
-    start_rect = pygame.Rect(291, 400, 170, 62)
-    skin_rect = pygame.Rect(491, 400, 170, 62)
-    difficulty_rect = pygame.Rect(691, 400, 170, 62)
+    start_rect = pygame.Rect(206, 386, 170, 62)
+    team_rect = pygame.Rect(396, 386, 170, 62)
+    skin_rect = pygame.Rect(586, 386, 170, 62)
+    difficulty_rect = pygame.Rect(776, 386, 170, 62)
     draw_button(start_rect, "开始游戏", mouse_pos)
-    draw_button(skin_rect, "换皮肤", mouse_pos, color=(77, 135, 197), text_color=(244, 249, 252))
+    draw_button(
+        team_rect,
+        "团队模式",
+        mouse_pos,
+        color=(226, 120, 72),
+        text_color=(255, 248, 240),
+    )
+    draw_button(
+        skin_rect,
+        "换皮肤",
+        mouse_pos,
+        color=(77, 135, 197),
+        text_color=(244, 249, 252),
+    )
     draw_button(
         difficulty_rect,
         f"难度：{selected_difficulty['name']}",
@@ -1797,35 +3430,52 @@ def draw_home(selected_skin, selected_difficulty, scores, mouse_pos):
 
     if scores:
         high_score = scores[0]["score"]
-        draw_text(f"历史最高分：{high_score}", 22, (255, 226, 145), (WIDTH // 2, 515))
+        draw_text(
+            f"历史最高分：{high_score}",
+            22,
+            (255, 226, 145),
+            (WIDTH // 2, 500),
+        )
     else:
-        draw_text("还没有游戏记录，来创造第一条成绩吧", 19, MUTED_TEXT, (WIDTH // 2, 515))
+        draw_text(
+            "还没有游戏记录，来创造第一条成绩吧",
+            19,
+            MUTED_TEXT,
+            (WIDTH // 2, 500),
+        )
 
     draw_text(
-        "右上圆盘控制方向 · 方向键 / WASD / QEZC 备用 · ESC 返回主页",
+        "团队模式：选队伍 → 选角色 → 5 分钟积分赛",
+        18,
+        (150, 210, 235),
+        (WIDTH // 2, 550),
+        bold=True,
+    )
+    draw_text(
+        "经典：右上圆盘 / 方向键 / WASD / QEZC · ESC 返回主页",
         18,
         MUTED_TEXT,
         (WIDTH // 2, 660),
     )
-    return start_rect, skin_rect, difficulty_rect
+    return start_rect, team_rect, skin_rect, difficulty_rect
 
 
-def skin_card_rects():
-    per_row = 5
-    card_width = 200
-    card_height = 160
-    gap_x = 12
-    gap_y = 18
+def skin_card_rects(count=12):
+    per_row = 6
+    card_width = 170
+    card_height = 164
+    gap_x = 10
+    gap_y = 14
     total_width = per_row * card_width + (per_row - 1) * gap_x
     start_x = (WIDTH - total_width) // 2
     cards = []
-    for index in range(len(SKINS)):
+    for index in range(count):
         row = index // per_row
         col = index % per_row
         cards.append(
             pygame.Rect(
                 start_x + col * (card_width + gap_x),
-                120 + row * (card_height + gap_y),
+                150 + row * (card_height + gap_y),
                 card_width,
                 card_height,
             )
@@ -1833,39 +3483,96 @@ def skin_card_rects():
     return cards
 
 
-def draw_skin_page(selected_index, mouse_pos):
+def draw_skin_page(selected_index, group_index, mouse_pos):
     draw_menu_background()
-    draw_text("选择角色皮肤", 50, TEXT_COLOR, (WIDTH // 2, 60), bold=True)
-    draw_text("点击卡片切换动物 / 动漫头像", 20, MUTED_TEXT, (WIDTH // 2, 101))
+    draw_text("选择角色皮肤", 42, TEXT_COLOR, (WIDTH // 2, 40), bold=True)
+    draw_text(
+        "经典 / 生肖 / 熊出没 / 喜羊羊 / 猪猪侠 / 奥特曼",
+        18,
+        MUTED_TEXT,
+        (WIDTH // 2, 74),
+    )
 
-    cards = skin_card_rects()
-    for index, (card, skin) in enumerate(zip(cards, SKINS)):
-        selected = index == selected_index
+    tab_width = 150
+    tab_height = 34
+    tab_gap = 8
+    total_tabs_width = len(SKIN_GROUPS) * tab_width + (len(SKIN_GROUPS) - 1) * tab_gap
+    tab_start = (WIDTH - total_tabs_width) // 2
+    tab_rects = []
+    for index, group in enumerate(SKIN_GROUPS):
+        tab = pygame.Rect(
+            tab_start + index * (tab_width + tab_gap),
+            88,
+            tab_width,
+            tab_height,
+        )
+        tab_rects.append(tab)
+        active = index == group_index
+        pygame.draw.rect(
+            SCREEN,
+            (37, 62, 83) if active else PANEL_COLOR,
+            tab,
+            border_radius=10,
+        )
+        pygame.draw.rect(
+            SCREEN,
+            ACCENT if active else PANEL_BORDER,
+            tab,
+            2,
+            border_radius=10,
+        )
+        draw_text(
+            group["name"],
+            17,
+            TEXT_COLOR if active else MUTED_TEXT,
+            tab.center,
+            bold=active,
+        )
+
+    group = SKIN_GROUPS[group_index]
+    cards = skin_card_rects(len(group["skins"]))
+    for card, skin in zip(cards, group["skins"]):
+        selected = skin is ALL_SKINS[selected_index]
         hovered = card.collidepoint(mouse_pos)
         card_color = (37, 62, 83) if hovered else PANEL_COLOR
         border_color = ACCENT if selected else PANEL_BORDER
-        pygame.draw.rect(SCREEN, card_color, card, border_radius=16)
-        pygame.draw.rect(SCREEN, border_color, card, 4 if selected else 2, border_radius=16)
-
-        draw_snake_art(
-            (card.centerx, card.y + 45),
-            skin,
-            length=9,
-            spacing=9,
-            radius=7,
-            amplitude=7,
+        pygame.draw.rect(SCREEN, card_color, card, border_radius=14)
+        pygame.draw.rect(
+            SCREEN,
+            border_color,
+            card,
+            4 if selected else 2,
+            border_radius=14,
         )
-        draw_text(skin["name"], 22, TEXT_COLOR, (card.centerx, card.y + 112), bold=True)
+        draw_avatar_portrait(
+            SCREEN,
+            (card.centerx, card.y + 62),
+            30,
+            skin,
+        )
+        draw_text(skin["name"], 18, TEXT_COLOR, (card.centerx, card.y + 116), bold=True)
+        draw_text(
+            skin.get("group", "经典"),
+            13,
+            MUTED_TEXT,
+            (card.centerx, card.y + 136),
+        )
         if selected:
-            draw_text("已选择", 16, ACCENT, (card.centerx, card.y + 140), bold=True)
+            draw_text("已选择", 14, ACCENT, (card.centerx, card.y + 152), bold=True)
         else:
-            draw_text("点击选择", 16, MUTED_TEXT, (card.centerx, card.y + 140))
+            draw_text("点击选择", 14, MUTED_TEXT, (card.centerx, card.y + 152))
 
-    start_rect = pygame.Rect(419, 495, 160, 62)
-    back_rect = pygame.Rect(599, 495, 140, 62)
+    start_rect = pygame.Rect(411, 520, 160, 56)
+    back_rect = pygame.Rect(591, 520, 160, 56)
     draw_button(start_rect, "开始游戏", mouse_pos)
-    draw_button(back_rect, "返回", mouse_pos, color=(86, 112, 132), text_color=TEXT_COLOR)
-    return cards, start_rect, back_rect
+    draw_button(
+        back_rect,
+        "返回",
+        mouse_pos,
+        color=(86, 112, 132),
+        text_color=TEXT_COLOR,
+    )
+    return cards, tab_rects, start_rect, back_rect
 
 
 def difficulty_card_rects():
@@ -1959,6 +3666,303 @@ def draw_difficulty_page(selected_index, mouse_pos):
     return cards, start_rect, back_rect
 
 
+def draw_team_select(mouse_pos):
+    draw_menu_background()
+    draw_text("选择你的队伍", 50, TEXT_COLOR, (WIDTH // 2, 52), bold=True)
+    draw_text(
+        "5 队 × 5 名角色 · 5 分钟积分赛 · 红 / 蓝 / 绿 / 黑 / 白",
+        19,
+        MUTED_TEXT,
+        (WIDTH // 2, 98),
+    )
+
+    top_back_rect = pygame.Rect(20, 16, 170, 46)
+    draw_button(
+        top_back_rect,
+        "← 返回主页",
+        mouse_pos,
+        color=(86, 112, 132),
+        text_color=TEXT_COLOR,
+    )
+
+    card_width = 200
+    gap = 18
+    total_width = len(TEAMS) * card_width + (len(TEAMS) - 1) * gap
+    start_x = (WIDTH - total_width) // 2
+    cards = []
+    for index, team in enumerate(TEAMS):
+        card = pygame.Rect(start_x + index * (card_width + gap), 140, card_width, 340)
+        cards.append(card)
+        hovered = card.collidepoint(mouse_pos)
+        pygame.draw.rect(
+            SCREEN,
+            (37, 62, 83) if hovered else PANEL_COLOR,
+            card,
+            border_radius=18,
+        )
+        pygame.draw.rect(SCREEN, team_ui_color(team), card, 4, border_radius=18)
+        band = pygame.Rect(card.x, card.y, card.w, 66)
+        pygame.draw.rect(
+            SCREEN,
+            team["body"],
+            band,
+            border_top_left_radius=14,
+            border_top_right_radius=14,
+        )
+        draw_text(
+            team["name"],
+            19,
+            team["text_color"],
+            band.center,
+            bold=True,
+        )
+        draw_text(
+            "12 名角色",
+            22,
+            TEXT_COLOR,
+            (card.centerx, card.y + 102),
+            bold=True,
+        )
+        draw_text(
+            "队伍色：" + ("红" if index == 0 else "蓝" if index == 1 else "绿" if index == 2 else "黑" if index == 3 else "白"),
+            16,
+            MUTED_TEXT,
+            (card.centerx, card.y + 132),
+        )
+        for preview_index in range(3):
+            skin = team_skin(team["skins"][preview_index], team)
+            draw_avatar_portrait(
+                SCREEN,
+                (card.centerx - 62 + preview_index * 62, card.y + 200),
+                20,
+                skin,
+                team=team,
+                show_badge=False,
+            )
+        draw_text(
+            "点击选择",
+            17,
+            team_ui_color(team),
+            (card.centerx, card.y + 280),
+            bold=True,
+        )
+
+    back_rect = pygame.Rect(486, 560, 180, 56)
+    draw_button(
+        back_rect,
+        "返回主页",
+        mouse_pos,
+        color=(86, 112, 132),
+        text_color=TEXT_COLOR,
+    )
+    return cards, [top_back_rect, back_rect]
+
+
+def draw_team_skin_page(team_index, selected_index, mouse_pos):
+    team = TEAMS[team_index]
+    draw_menu_background()
+    draw_text(
+        f"{team['name']} · 选择角色",
+        40,
+        TEXT_COLOR,
+        (WIDTH // 2, 42),
+        bold=True,
+    )
+    draw_text(
+        "点击角色卡片，再点「开始比赛」",
+        18,
+        MUTED_TEXT,
+        (WIDTH // 2, 80),
+    )
+    draw_text(
+        f"队伍色：{team['short']} · 5 分钟积分赛",
+        17,
+        team_ui_color(team),
+        (WIDTH // 2, 108),
+        bold=True,
+    )
+
+    top_back_rect = pygame.Rect(20, 16, 170, 46)
+    draw_button(
+        top_back_rect,
+        "← 返回队伍",
+        mouse_pos,
+        color=(86, 112, 132),
+        text_color=TEXT_COLOR,
+    )
+
+    cards = skin_card_rects(len(team["skins"]))
+    for index, (card, skin) in enumerate(zip(cards, team["skins"])):
+        selected = index == selected_index
+        hovered = card.collidepoint(mouse_pos)
+        pygame.draw.rect(
+            SCREEN,
+            (37, 62, 83) if hovered else PANEL_COLOR,
+            card,
+            border_radius=14,
+        )
+        pygame.draw.rect(
+            SCREEN,
+            team_ui_color(team) if selected else PANEL_BORDER,
+            card,
+            4 if selected else 2,
+            border_radius=14,
+        )
+        preview = team_skin(skin, team)
+        draw_avatar_portrait(
+            SCREEN,
+            (card.centerx, card.y + 62),
+            30,
+            preview,
+            team=team,
+        )
+        draw_text(skin["name"], 18, TEXT_COLOR, (card.centerx, card.y + 116), bold=True)
+        draw_text(
+            team["short"] + "角色",
+            13,
+            team_ui_color(team),
+            (card.centerx, card.y + 136),
+        )
+        if selected:
+            draw_text("已选择", 14, team_ui_color(team), (card.centerx, card.y + 152), bold=True)
+        else:
+            draw_text("点击选择", 14, MUTED_TEXT, (card.centerx, card.y + 152))
+
+    start_rect = pygame.Rect(411, 520, 170, 56)
+    back_rect = pygame.Rect(601, 520, 150, 56)
+    draw_button(start_rect, "开始比赛", mouse_pos)
+    draw_button(
+        back_rect,
+        "返回队伍",
+        mouse_pos,
+        color=(86, 112, 132),
+        text_color=TEXT_COLOR,
+    )
+    return cards, start_rect, [top_back_rect, back_rect]
+
+
+def draw_team_results(game, mouse_pos):
+    if game.results is None:
+        game.finish_match()
+    draw_menu_background()
+    draw_text("团 队 赛 结 束", 48, TEXT_COLOR, (WIDTH // 2, 42), bold=True)
+    results = game.results
+    winner = results["winner"]
+    winner_team = TEAMS[winner]
+    winner_text = f"获胜队伍：{winner_team['name']}"
+    if len(results["tied"]) > 1:
+        winner_text += "（同分，按最高个人分判定）"
+    draw_text(
+        winner_text,
+        28,
+        team_ui_color(winner_team),
+        (WIDTH // 2, 94),
+        bold=True,
+    )
+
+    left = pygame.Rect(30, 126, 720, 498)
+    right = pygame.Rect(770, 126, 350, 498)
+    pygame.draw.rect(SCREEN, (20, 35, 50), left, border_radius=18)
+    pygame.draw.rect(SCREEN, PANEL_BORDER, left, 2, border_radius=18)
+    pygame.draw.rect(SCREEN, (20, 35, 50), right, border_radius=18)
+    pygame.draw.rect(SCREEN, PANEL_BORDER, right, 2, border_radius=18)
+
+    draw_text(
+        "各队总分与前三名",
+        21,
+        TEXT_COLOR,
+        (left.centerx, left.y + 24),
+        bold=True,
+    )
+    order = sorted(
+        range(len(TEAMS)),
+        key=lambda index: (-results["totals"][index], index),
+    )
+    for row, team_index in enumerate(order):
+        team = TEAMS[team_index]
+        row_y = left.y + 52 + row * 86
+        row_rect = pygame.Rect(left.x + 14, row_y, left.w - 28, 76)
+        if team_index == winner:
+            pygame.draw.rect(SCREEN, (38, 82, 66), row_rect, border_radius=12)
+        pygame.draw.rect(SCREEN, team_ui_color(team), row_rect, 2, border_radius=12)
+        draw_left_text(
+            f"{row + 1}. {team['name']}",
+            19,
+            team_ui_color(team),
+            (row_rect.x + 14, row_y + 8),
+            bold=True,
+        )
+        draw_left_text(
+            f"总分 {results['totals'][team_index]}",
+            19,
+            TEXT_COLOR,
+            (row_rect.x + 330, row_y + 8),
+            bold=True,
+        )
+        top_text = "   ".join(
+            f"{index + 1}.{name} {score}"
+            for index, (name, score) in enumerate(results["team_top"][team_index])
+        )
+        draw_left_text(
+            top_text or "暂无得分",
+            16,
+            (205, 219, 225),
+            (row_rect.x + 14, row_y + 42),
+        )
+
+    draw_text(
+        "获胜队 TOP 5",
+        22,
+        team_ui_color(winner_team),
+        (right.centerx, right.y + 24),
+        bold=True,
+    )
+    for index, (name, score) in enumerate(results["winner_top5"]):
+        row_y = right.y + 64 + index * 58
+        row_rect = pygame.Rect(right.x + 18, row_y, right.w - 36, 48)
+        pygame.draw.rect(SCREEN, (30, 50, 66), row_rect, border_radius=10)
+        draw_text(
+            f"{index + 1}",
+            18,
+            team_ui_color(winner_team),
+            (row_rect.x + 18, row_rect.centery),
+            bold=True,
+        )
+        draw_text(
+            name,
+            18,
+            TEXT_COLOR,
+            (row_rect.centerx - 20, row_rect.centery),
+            bold=True,
+        )
+        draw_text(
+            str(score),
+            18,
+            (255, 226, 145),
+            (row_rect.right - 36, row_rect.centery),
+            bold=True,
+        )
+    if not results["winner_top5"]:
+        draw_text(
+            "暂无得分",
+            18,
+            MUTED_TEXT,
+            (right.centerx, right.y + 100),
+        )
+
+    replay_rect = pygame.Rect(411, 642, 170, 50)
+    home_rect = pygame.Rect(601, 642, 150, 50)
+    draw_button(replay_rect, "再来一局", mouse_pos)
+    draw_button(
+        home_rect,
+        "返回主页",
+        mouse_pos,
+        color=(86, 112, 132),
+        text_color=TEXT_COLOR,
+    )
+    return replay_rect, home_rect
+
+
 def draw_game_over(game, scores, current_entry, rank, mouse_pos):
     draw_menu_background()
     panel = pygame.Rect(126, 32, 900, 540)
@@ -2016,18 +4020,31 @@ def main():
     running = True
     state = "home"
     selected_index = 0
+    selected_group_index = 0
     selected_difficulty_index = 1
+    selected_team_index = 0
+    selected_team_skin_index = 0
     game = None
     scores = load_scores()
     current_entry = None
     current_rank = 0
 
+    def group_index_for_skin(skin):
+        for index, group in enumerate(SKIN_GROUPS):
+            if any(candidate is skin for candidate in group["skins"]):
+                return index
+        return 0
+
     def launch_new_game():
         start_background_music()
         return SnakeGame(
-            SKINS[selected_index],
+            ALL_SKINS[selected_index],
             DIFFICULTIES[selected_difficulty_index],
         )
+
+    def launch_team_game():
+        start_background_music()
+        return TeamGame(selected_team_index, selected_team_skin_index)
 
     key_directions = {
         pygame.K_UP: "up",
@@ -2054,8 +4071,8 @@ def main():
 
             if state == "home":
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    start_rect, skin_rect, difficulty_rect = draw_home(
-                        SKINS[selected_index],
+                    start_rect, team_rect, skin_rect, difficulty_rect = draw_home(
+                        ALL_SKINS[selected_index],
                         DIFFICULTIES[selected_difficulty_index],
                         scores,
                         mouse_pos,
@@ -2063,20 +4080,38 @@ def main():
                     if start_rect.collidepoint(event.pos):
                         game = launch_new_game()
                         state = "playing"
+                    elif team_rect.collidepoint(event.pos):
+                        state = "team_select"
                     elif skin_rect.collidepoint(event.pos):
+                        selected_group_index = group_index_for_skin(
+                            ALL_SKINS[selected_index]
+                        )
                         state = "skins"
                     elif difficulty_rect.collidepoint(event.pos):
                         state = "difficulty"
 
             elif state == "skins":
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    cards, start_rect, back_rect = draw_skin_page(
-                        selected_index, mouse_pos
+                    cards, tab_rects, start_rect, back_rect = draw_skin_page(
+                        selected_index,
+                        selected_group_index,
+                        mouse_pos,
                     )
-                    for index, card in enumerate(cards):
-                        if card.collidepoint(event.pos):
-                            selected_index = index
+                    clicked_tab = False
+                    for index, tab in enumerate(tab_rects):
+                        if tab.collidepoint(event.pos):
+                            selected_group_index = index
+                            clicked_tab = True
                             break
+                    if not clicked_tab:
+                        group = SKIN_GROUPS[selected_group_index]
+                        for card, skin in zip(cards, group["skins"]):
+                            if card.collidepoint(event.pos):
+                                for global_index, candidate in enumerate(ALL_SKINS):
+                                    if candidate is skin:
+                                        selected_index = global_index
+                                        break
+                                break
                     if start_rect.collidepoint(event.pos):
                         game = launch_new_game()
                         state = "playing"
@@ -2103,6 +4138,39 @@ def main():
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     state = "home"
 
+            elif state == "team_select":
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    cards, back_rects = draw_team_select(mouse_pos)
+                    for index, card in enumerate(cards):
+                        if card.collidepoint(event.pos):
+                            selected_team_index = index
+                            selected_team_skin_index = 0
+                            state = "team_skins"
+                            break
+                    if any(rect.collidepoint(event.pos) for rect in back_rects):
+                        state = "home"
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    state = "home"
+
+            elif state == "team_skins":
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    cards, start_rect, back_rects = draw_team_skin_page(
+                        selected_team_index,
+                        selected_team_skin_index,
+                        mouse_pos,
+                    )
+                    for index, card in enumerate(cards):
+                        if card.collidepoint(event.pos):
+                            selected_team_skin_index = index
+                            break
+                    if start_rect.collidepoint(event.pos):
+                        game = launch_team_game()
+                        state = "playing"
+                    elif any(rect.collidepoint(event.pos) for rect in back_rects):
+                        state = "team_select"
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    state = "team_select"
+
             elif state == "playing":
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
@@ -2115,10 +4183,20 @@ def main():
                     elif event.key in key_directions:
                         game.turn(key_directions[event.key])
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    if not game.paused and PAUSE_BUTTON_RECT.collidepoint(event.pos):
+                    if game.paused:
+                        if (
+                            game.pause_resume_rect is not None
+                            and game.pause_resume_rect.collidepoint(event.pos)
+                        ) or RESUME_BUTTON_RECT.collidepoint(event.pos):
+                            game.set_paused(False)
+                        elif (
+                            game.pause_exit_rect is not None
+                            and game.pause_exit_rect.collidepoint(event.pos)
+                        ):
+                            stop_background_music()
+                            state = "home"
+                    elif PAUSE_BUTTON_RECT.collidepoint(event.pos):
                         game.set_paused(True)
-                    elif game.paused and RESUME_BUTTON_RECT.collidepoint(event.pos):
-                        game.set_paused(False)
 
             elif state == "game_over":
                 if event.type == pygame.KEYDOWN and event.key in (
@@ -2143,30 +4221,65 @@ def main():
                     elif home_rect.collidepoint(event.pos):
                         state = "home"
 
+            elif state == "team_results":
+                if event.type == pygame.KEYDOWN and event.key in (
+                    pygame.K_RETURN,
+                    pygame.K_SPACE,
+                ):
+                    game = launch_team_game()
+                    state = "playing"
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    state = "home"
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    replay_rect, home_rect = draw_team_results(game, mouse_pos)
+                    if replay_rect.collidepoint(event.pos):
+                        game = launch_team_game()
+                        state = "playing"
+                    elif home_rect.collidepoint(event.pos):
+                        state = "home"
+
         if state == "playing" and not game.paused:
             game.update_pointer(mouse_pos)
             now = pygame.time.get_ticks()
             if now - game.last_move >= game.difficulty["interval"]:
                 game.last_move = now
                 dead_reason = game.update()
-                if dead_reason:
-                    game.dead_reason = dead_reason
-                    scores, current_entry, current_rank = record_score(game)
+                if game.mode == "classic":
+                    if dead_reason:
+                        game.dead_reason = dead_reason
+                        scores, current_entry, current_rank = record_score(game)
+                        stop_background_music()
+                        play_sound(DEATH_SOUND)
+                        state = "game_over"
+                elif game.time_left_ms() <= 0:
+                    game.finish_match()
                     stop_background_music()
                     play_sound(DEATH_SOUND)
-                    state = "game_over"
+                    state = "team_results"
 
         if state == "home":
             draw_home(
-                SKINS[selected_index],
+                ALL_SKINS[selected_index],
                 DIFFICULTIES[selected_difficulty_index],
                 scores,
                 mouse_pos,
             )
         elif state == "skins":
-            draw_skin_page(selected_index, mouse_pos)
+            draw_skin_page(
+                selected_index,
+                selected_group_index,
+                mouse_pos,
+            )
         elif state == "difficulty":
             draw_difficulty_page(selected_difficulty_index, mouse_pos)
+        elif state == "team_select":
+            draw_team_select(mouse_pos)
+        elif state == "team_skins":
+            draw_team_skin_page(
+                selected_team_index,
+                selected_team_skin_index,
+                mouse_pos,
+            )
         elif state == "playing":
             game.draw()
         elif state == "game_over":
@@ -2177,6 +4290,8 @@ def main():
                 current_rank,
                 mouse_pos,
             )
+        elif state == "team_results":
+            draw_team_results(game, mouse_pos)
 
         pygame.display.flip()
         CLOCK.tick(60)
@@ -2186,5 +4301,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

@@ -77,6 +77,13 @@
     "date": "2026-11-17 22:10"
   },
   {
+    "score": 60,
+    "length": 10,
+    "difficulty": "中等",
+    "skin": "橘猫",
+    "date": "2026-11-20 16:11"
+  },
+  {
     "score": 50,
     "length": 11,
     "difficulty": "中等",
@@ -169,6 +176,13 @@
   },
   {
     "score": 30,
+    "length": 9,
+    "difficulty": "中等",
+    "skin": "橘猫",
+    "date": "2026-11-20 16:15"
+  },
+  {
+    "score": 30,
     "length": 8,
     "difficulty": "中等",
     "skin": "红蛇",
@@ -215,6 +229,34 @@
     "difficulty": "中等",
     "skin": "橘猫",
     "date": "2026-11-20 15:10"
+  },
+  {
+    "score": 20,
+    "length": 8,
+    "difficulty": "中等",
+    "skin": "橘猫",
+    "date": "2026-11-20 16:11"
+  },
+  {
+    "score": 20,
+    "length": 8,
+    "difficulty": "中等",
+    "skin": "橘猫",
+    "date": "2026-11-20 16:15"
+  },
+  {
+    "score": 20,
+    "length": 8,
+    "difficulty": "中等",
+    "skin": "橘猫",
+    "date": "2026-11-20 16:16"
+  },
+  {
+    "score": 20,
+    "length": 8,
+    "difficulty": "中等",
+    "skin": "橘猫",
+    "date": "2026-11-20 17:53"
   },
   {
     "score": 20,
@@ -397,6 +439,27 @@
     "difficulty": "中等",
     "skin": "橘猫",
     "date": "2026-11-20 15:11"
+  },
+  {
+    "score": 0,
+    "length": 6,
+    "difficulty": "中等",
+    "skin": "金牛",
+    "date": "2026-11-20 17:00"
+  },
+  {
+    "score": 0,
+    "length": 6,
+    "difficulty": "中等",
+    "skin": "金牛",
+    "date": "2026-11-20 17:00"
+  },
+  {
+    "score": 0,
+    "length": 6,
+    "difficulty": "中等",
+    "skin": "吉吉国王",
+    "date": "2026-11-20 17:38"
   },
   {
     "score": 0,
